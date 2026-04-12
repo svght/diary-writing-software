@@ -1,0 +1,403 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智能日记本 · 浏览器版</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-brand">
+      <span class="brand-mark">✨</span>
+      <div>
+        <p class="brand-subtitle">智能日记本</p>
+        <h1>浏览器版日记界面</h1>
+      </div>
+    </div>
+    <a class="button button-primary" href="#editor">开始写日记</a>
+  </header>
+
+  <main class="page-shell">
+    <section class="hero-panel">
+      <div class="hero-copy">
+        <p class="eyebrow">本地浏览器界面</p>
+        <h2>微软官网风格，清爽模块化日记体验</h2>
+        <p>在浏览器中打开，无需桌面窗口。实时获取城市天气，快速保存并下载日记。</p>
+        <div class="hero-actions">
+          <button id="refreshWeather" class="button button-secondary">刷新天气</button>
+          <button id="refreshNews" class="button button-secondary">刷新新闻</button>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="weather-block">
+          <div class="weather-title">实时天气</div>
+          <div class="weather-status">
+            <span id="weatherCity">{{ default_city }}</span>
+            <span id="weatherCondition">加载中...</span>
+          </div>
+          <div class="weather-temperature" id="weatherTemperature">--°C</div>
+          <div class="weather-summary" id="weatherSummary">请等待天气加载</div>
+          <div class="weather-details" id="weatherDetails"></div>
+        </div>
+        <div class="city-card">
+          <label for="citySelect">切换城市</label>
+          <select id="citySelect" class="control-input">
+            {% for city in cities %}
+            <option value="{{ city }}" {% if city == default_city %}selected{% endif %}>{{ city }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="news-grid">
+      <article class="news-card news-highlight">
+        <div class="card-header news-header">
+          <span>国内热点新闻</span>
+          <button id="refreshNewsHeader" class="button button-secondary button-small">刷新</button>
+        </div>
+        <div class="news-meta" id="domesticNewsLoading">正在加载国内新闻...</div>
+        <ul class="news-list" id="domesticNews"></ul>
+      </article>
+      <article class="news-card news-highlight">
+        <div class="card-header news-header">
+          <span>国际热点新闻</span>
+          <button id="refreshNewsHeader2" class="button button-secondary button-small">刷新</button>
+        </div>
+        <div class="news-meta" id="internationalNewsLoading">正在加载国际新闻...</div>
+        <ul class="news-list" id="internationalNews"></ul>
+      </article>
+    </section>
+
+    <section class="layout-grid">
+      <aside class="sidebar-card">
+        <div class="card-header">说明</div>
+        <p>选择城市后，系统会自动加载天气信息。填写标题与正文后，点击保存即可生成本地文件。</p>
+        <ul>
+          <li>本地运行，不依赖桌面窗口</li>
+          <li>保存文件后可直接下载</li>
+          <li>可自定义保存目录，页面会显示完整保存地址</li>
+        </ul>
+      </aside>
+
+      <article class="editor-card" id="editor">
+        <div class="card-header">写日记</div>
+        <form id="diaryForm">
+          <label for="noteTitle">日记标题</label>
+          <input id="noteTitle" class="control-input" type="text" placeholder="今天写了什么？" value="今日日记">
+
+          <label for="noteContent">内容</label>
+          <textarea id="noteContent" rows="12" placeholder="在此输入日记内容..."></textarea>
+
+          <label for="imageFiles">插入图片</label>
+          <input id="imageFiles" class="control-input" type="file" accept="image/*" multiple>
+          <div class="media-list" id="imageList"></div>
+
+          <label for="videoFiles">插入视频</label>
+          <input id="videoFiles" class="control-input" type="file" accept="video/*" multiple>
+          <div class="media-list" id="videoList"></div>
+
+          <div class="form-row">
+            <div class="info-box">
+              <label for="saveDirInput"><strong>自定义保存地址</strong></label>
+              <input id="saveDirInput" class="control-input" type="text" placeholder="saved_diaries/custom_folder">
+              <small class="hint">填写后会使用该路径保存，路径应相对于项目根目录。</small>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="info-box full-path-box">
+              <strong>完整保存地址</strong>
+              <span id="saveDirLabel"></span>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button type="submit" class="button button-primary">保存日记</button>
+            <span class="hint" id="saveMessage"></span>
+          </div>
+
+          <div class="download-links" id="downloadLinks"></div>
+        </form>
+      </article>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>本地运行 · 浏览器访问 · 微软官网式界面</p>
+  </footer>
+
+  <script>
+    const citySelect = document.getElementById('citySelect');
+    const weatherCity = document.getElementById('weatherCity');
+    const weatherCondition = document.getElementById('weatherCondition');
+    const weatherTemperature = document.getElementById('weatherTemperature');
+    const weatherSummary = document.getElementById('weatherSummary');
+    const weatherDetails = document.getElementById('weatherDetails');
+    const refreshWeather = document.getElementById('refreshWeather');
+    const refreshNews = document.getElementById('refreshNews');
+    const refreshNewsHeader = document.getElementById('refreshNewsHeader');
+    const refreshNewsHeader2 = document.getElementById('refreshNewsHeader2');
+    const diaryForm = document.getElementById('diaryForm');
+    const noteTitle = document.getElementById('noteTitle');
+    const noteContent = document.getElementById('noteContent');
+    const imageFilesInput = document.getElementById('imageFiles');
+    const videoFilesInput = document.getElementById('videoFiles');
+    const imageList = document.getElementById('imageList');
+    const videoList = document.getElementById('videoList');
+    const saveMessage = document.getElementById('saveMessage');
+    const downloadLinks = document.getElementById('downloadLinks');
+    const saveDirInput = document.getElementById('saveDirInput');
+    const saveDirLabel = document.getElementById('saveDirLabel');
+    const domesticNews = document.getElementById('domesticNews');
+    const internationalNews = document.getElementById('internationalNews');
+    const domesticNewsLoading = document.getElementById('domesticNewsLoading');
+    const internationalNewsLoading = document.getElementById('internationalNewsLoading');
+    const baseDir = {{ base_dir | tojson }};
+    const defaultSaveDir = {{ default_save_dir | tojson }};
+
+    let currentWeather = null;
+    let selectedImages = [];
+    let selectedVideos = [];
+
+    function ensureCityOption(city) {
+      if (!city) return;
+      const exists = Array.from(citySelect.options).some(option => option.value === city);
+      if (!exists) {
+        const option = document.createElement('option');
+        option.value = city;
+        option.textContent = city;
+        citySelect.appendChild(option);
+      }
+      citySelect.value = city;
+    }
+
+    async function fetchCityFromCoordinates(latitude, longitude) {
+      try {
+        const response = await fetch(`/api/geocode?lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}`);
+        if (!response.ok) {
+          return null;
+        }
+        const data = await response.json();
+        return data.success ? data.city : null;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    async function setInitialCityFromSystemLocation() {
+      if (!navigator.geolocation) {
+        return false;
+      }
+
+      return new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const city = await fetchCityFromCoordinates(position.coords.latitude, position.coords.longitude);
+          if (city) {
+            ensureCityOption(city);
+            loadWeather(city);
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        }, () => {
+          resolve(false);
+        }, { timeout: 10000 });
+      });
+    }
+
+    function renderMediaList() {
+      imageList.innerHTML = selectedImages.map(item => `<div class="media-item">📷 ${item}</div>`).join('');
+      videoList.innerHTML = selectedVideos.map(item => `<div class="media-item">🎬 ${item}</div>`).join('');
+    }
+
+    function getSaveDirectoryValue() {
+      return saveDirInput.value.trim() || defaultSaveDir;
+    }
+
+    function updateSaveDirectoryLabel() {
+      const selectedDir = getSaveDirectoryValue();
+      const normalizedBase = baseDir.replace(/\\/g, '/');
+      saveDirLabel.textContent = `${normalizedBase}/${selectedDir}`;
+    }
+
+    async function uploadMedia(files, mediaType) {
+      if (!files.length) {
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('type', mediaType);
+      for (const file of files) {
+        formData.append('files', file);
+      }
+
+      try {
+        const response = await fetch('/api/upload_media', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error || '上传失败');
+        }
+
+        if (mediaType === 'image') {
+          selectedImages = selectedImages.concat(data.items);
+        } else {
+          selectedVideos = selectedVideos.concat(data.items);
+        }
+
+        renderMediaList();
+        saveMessage.textContent = '媒体文件上传成功';
+      } catch (error) {
+        saveMessage.textContent = error.message;
+      }
+    }
+
+    async function loadWeather(city) {
+      try {
+        const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error || '天气加载失败');
+        }
+        currentWeather = data.weather;
+        weatherCity.textContent = data.weather.city || city;
+        weatherCondition.textContent = data.weather.condition || '未知';
+        weatherTemperature.textContent = `${data.weather.temperature_c || '--'}°C`;
+        weatherSummary.textContent = `体感 ${data.weather.feelslike_c || '--'}°C · 湿度 ${data.weather.humidity || '--'}%`;
+        weatherDetails.textContent = `风速 ${data.weather.wind_kph || '--'} km/h · 能见度 ${data.weather.visibility_km || '--'} km`;
+        saveMessage.textContent = '';
+      } catch (error) {
+        weatherCondition.textContent = '加载失败';
+        weatherSummary.textContent = error.message;
+        weatherDetails.textContent = '';
+        currentWeather = null;
+      }
+    }
+
+    async function loadNews() {
+      domesticNewsLoading.textContent = '正在加载国内新闻...';
+      internationalNewsLoading.textContent = '正在加载国际新闻...';
+      domesticNews.innerHTML = '';
+      internationalNews.innerHTML = '';
+      try {
+        const response = await fetch('/api/news');
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error('新闻加载失败');
+        }
+        renderNewsList(domesticNews, data.domestic, domesticNewsLoading);
+        renderNewsList(internationalNews, data.international, internationalNewsLoading);
+      } catch (error) {
+        domesticNewsLoading.textContent = '国内新闻加载失败';
+        internationalNewsLoading.textContent = '国际新闻加载失败';
+      }
+    }
+
+    function renderNewsList(container, list, loadingElement) {
+      if (!list || !list.length) {
+        loadingElement.textContent = '未能获取到新闻内容。';
+        return;
+      }
+      loadingElement.textContent = '';
+      container.innerHTML = list.map(item => `
+        <li class="news-item">
+          <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+          <div class="news-meta">来源：${item.source}${item.published ? ' · ' + item.published : ''}</div>
+        </li>
+      `).join('');
+    }
+
+    citySelect.addEventListener('change', () => {
+      saveMessage.textContent = '正在加载天气...';
+      loadWeather(citySelect.value);
+    });
+
+    saveDirInput.addEventListener('input', updateSaveDirectoryLabel);
+
+    imageFilesInput.addEventListener('change', () => {
+      uploadMedia(imageFilesInput.files, 'image');
+      imageFilesInput.value = '';
+    });
+
+    videoFilesInput.addEventListener('change', () => {
+      uploadMedia(videoFilesInput.files, 'video');
+      videoFilesInput.value = '';
+    });
+
+    refreshWeather.addEventListener('click', () => {
+      saveMessage.textContent = '正在刷新天气...';
+      loadWeather(citySelect.value);
+    });
+
+    const refreshNewsAction = () => {
+      domesticNewsLoading.textContent = '正在刷新国内新闻...';
+      internationalNewsLoading.textContent = '正在刷新国际新闻...';
+      loadNews();
+    };
+
+    refreshNews.addEventListener('click', refreshNewsAction);
+    if (refreshNewsHeader) {
+      refreshNewsHeader.addEventListener('click', refreshNewsAction);
+    }
+    if (refreshNewsHeader2) {
+      refreshNewsHeader2.addEventListener('click', refreshNewsAction);
+    }
+
+    diaryForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      saveMessage.textContent = '';
+      downloadLinks.innerHTML = '';
+      const content = noteContent.value.trim();
+      const title = noteTitle.value.trim() || '今日日记';
+      const city = citySelect.value;
+      if (!content) {
+        saveMessage.textContent = '请填写日记内容。';
+        return;
+      }
+
+      const payload = {
+        title,
+        city,
+        content,
+        weather: currentWeather || { condition: '未知', temperature_c: '--', feelslike_c: '--', humidity: '--', wind_kph: '--', visibility_km: '--' },
+        images: selectedImages,
+        videos: selectedVideos,
+        save_dir: getSaveDirectoryValue(),
+      };
+
+      try {
+        const response = await fetch('/api/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error || '保存失败');
+        }
+        saveMessage.textContent = '保存成功。可点击下载生成文件。';
+        const saveDir = encodeURIComponent(data.save_dir || getSaveDirectoryValue());
+        downloadLinks.innerHTML = `
+          <a href="/download/${saveDir}/${encodeURIComponent(data.json_file)}" target="_blank" class="link-button">下载 JSON</a>
+          <a href="/download/${saveDir}/${encodeURIComponent(data.txt_file)}" target="_blank" class="link-button">下载 TXT</a>
+          <a href="/download/${saveDir}/${encodeURIComponent(data.docx_file)}" target="_blank" class="link-button">下载 DOCX</a>
+        `;
+      } catch (error) {
+        saveMessage.textContent = error.message;
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      const usedSystemCity = await setInitialCityFromSystemLocation();
+      if (!usedSystemCity) {
+        loadWeather(citySelect.value);
+      }
+      loadNews();
+      updateSaveDirectoryLabel();
+    });
+  </script>
+</body>
+</html>
