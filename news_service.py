@@ -8,6 +8,9 @@ class NewsService:
 
     DOMESTIC_TOUTIAO_URL = "https://www.toutiao.com/api/pc/feed/?category=news_hot&max_behot_time=0"
     INTERNATIONAL_FEED_URL = "https://feeds.npr.org/1004/rss.xml"
+    INTERNATIONAL_BBC_URL = "https://feeds.bbci.co.uk/news/rss.xml"
+    INTERNATIONAL_REUTERS_URL = "https://feeds.reuters.com/Reuters/worldNews"
+    DOMESTIC_WEIBO_URL = "https://rss.sina.com.cn/news/society/focus15.xml"  # Using Sina society news as proxy for Weibo social content
 
     def __init__(self):
         self.headers = {
@@ -47,6 +50,8 @@ class NewsService:
             for entry in channel.findall('item')[:max_items]:
                 title = self._clean_text(entry.findtext('title'))
                 link = self._clean_text(entry.findtext('link'))
+                if link.startswith('http://go.rss.sina.com.cn/redirect.php?url='):
+                    link = link.split('url=', 1)[1]
                 pub_date = self._clean_text(entry.findtext('pubDate'))
                 source_elem = entry.find('source')
                 source = self._clean_text(source_elem.text) if source_elem is not None and source_elem.text else feed_title
@@ -230,6 +235,15 @@ class NewsService:
             domestic = self._parse_toutiao_hot(toutiao_data, max_items=10)
         except (requests.RequestException, ValueError):
             domestic = []
+
+        try:
+            weibo_xml = self._fetch_feed(self.DOMESTIC_WEIBO_URL)
+            weibo_news = self._parse_rss(weibo_xml, max_items=10)
+            for item in weibo_news:
+                item['link'] = 'https://weibo.com/'
+            domestic.extend(weibo_news)
+        except requests.RequestException:
+            pass
 
         try:
             international_xml = self._fetch_feed(self.INTERNATIONAL_FEED_URL)

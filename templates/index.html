@@ -57,6 +57,7 @@
           <span>国内热点新闻</span>
           <button id="refreshNewsHeader" class="button button-secondary button-small">刷新</button>
         </div>
+        <div class="news-tabs" id="domesticTabs"></div>
         <div class="news-meta" id="domesticNewsLoading">正在加载国内新闻...</div>
         <ul class="news-list" id="domesticNews"></ul>
       </article>
@@ -149,10 +150,7 @@
     const downloadLinks = document.getElementById('downloadLinks');
     const saveDirInput = document.getElementById('saveDirInput');
     const saveDirLabel = document.getElementById('saveDirLabel');
-    const domesticNews = document.getElementById('domesticNews');
-    const internationalNews = document.getElementById('internationalNews');
-    const domesticNewsLoading = document.getElementById('domesticNewsLoading');
-    const internationalNewsLoading = document.getElementById('internationalNewsLoading');
+    const domesticTabs = document.getElementById('domesticTabs');
     const baseDir = {{ base_dir | tojson }};
     const defaultSaveDir = {{ default_save_dir | tojson }};
 
@@ -288,7 +286,7 @@
         if (!data.success) {
           throw new Error('新闻加载失败');
         }
-        renderNewsList(domesticNews, data.domestic, domesticNewsLoading);
+        renderDomesticNews(data.domestic);
         renderNewsList(internationalNews, data.international, internationalNewsLoading);
       } catch (error) {
         domesticNewsLoading.textContent = '国内新闻加载失败';
@@ -297,10 +295,6 @@
     }
 
     function renderNewsList(container, list, loadingElement) {
-      if (!list || !list.length) {
-        loadingElement.textContent = '未能获取到新闻内容。';
-        return;
-      }
       loadingElement.textContent = '';
       container.innerHTML = list.map(item => `
         <li class="news-item">
@@ -308,6 +302,43 @@
           <div class="news-meta">来源：${item.source}${item.published ? ' · ' + item.published : ''}</div>
         </li>
       `).join('');
+    }
+
+    function renderDomesticNews(list) {
+      if (!list || !list.length) {
+        domesticNewsLoading.textContent = '未能获取到新闻内容。';
+        domesticTabs.innerHTML = '';
+        domesticNews.innerHTML = '';
+        return;
+      }
+      // Group by source, but merge Toutiao sources into "头条", Sina into "微博"
+      const grouped = {};
+      list.forEach(item => {
+        let category = '头条'; // Default to Toutiao
+        if (item.source && (item.source.includes('新浪') || item.source.includes('焦点'))) {
+          category = '微博';
+        }
+        if (!grouped[category]) grouped[category] = [];
+        grouped[category].push(item);
+      });
+      const sources = Object.keys(grouped);
+      // Create tabs
+      domesticTabs.innerHTML = sources.map(source => `<button class="news-tab" data-source="${source}">${source}</button>`).join('');
+      // Add click events
+      domesticTabs.querySelectorAll('.news-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          // Remove active class
+          domesticTabs.querySelectorAll('.news-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          // Render news for this source
+          renderNewsList(domesticNews, grouped[tab.dataset.source], domesticNewsLoading);
+        });
+      });
+      // Default to first tab
+      if (sources.length > 0) {
+        domesticTabs.querySelector('.news-tab').classList.add('active');
+        renderNewsList(domesticNews, grouped[sources[0]], domesticNewsLoading);
+      }
     }
 
     citySelect.addEventListener('change', () => {

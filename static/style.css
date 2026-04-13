@@ -397,6 +397,33 @@ textarea {
   font-size: 14px;
 }
 
+.news-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.news-tab {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #475569;
+}
+
+.news-tab:hover {
+  background: #f3f4f6;
+}
+
+.news-tab.active {
+  background: #0078d4;
+  color: #ffffff;
+  border-color: #0078d4;
+}
+
 .news-list {
   list-style: none;
   margin: 0;
