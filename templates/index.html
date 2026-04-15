@@ -471,7 +471,7 @@
               <span>来源：${item.source || '未知'}</span>
               ${item.region ? `<span class="news-region">地区：${item.region}</span>` : ''}
               ${item.quality_score ? `<span class="news-quality">质量：${item.quality_score}/100</span>` : ''}
-              ${item.hot_score ? `<span class="news-hot">热度：${Math.round(item.hot_score)}</span>` : ''}
+              ${item.hot_score !== undefined ? `<span class="news-hot">热度：${Math.round(item.hot_score)}</span>` : ''}
               ${item.published ? `<span>发布时间：${item.published}</span>` : ''}
             </div>
           </li>
@@ -488,7 +488,7 @@
             <span>来源：${item.source || '未知'}</span>
             ${item.region ? `<span class="news-region">地区：${item.region}</span>` : ''}
             ${item.quality_score ? `<span class="news-quality">质量：${item.quality_score}/100</span>` : ''}
-            ${item.hot_score ? `<span class="news-hot">热度：${Math.round(item.hot_score)}</span>` : ''}
+            ${item.hot_score !== undefined ? `<span class="news-hot">热度：${Math.round(item.hot_score)}</span>` : ''}
             ${item.published ? `<span>发布时间：${item.published}</span>` : ''}
           </div>
         </li>
