@@ -235,8 +235,9 @@ class NewsService:
                     published = str(behot_time)
 
             if title and link:
-                # 为国内新闻也添加质量评分和热度分数
-                quality_score = self._calculate_quality_score(title, source, published, '国内')
+                # 为国内新闻添加地区分类、质量评分和热度分数
+                region = self._classify_domestic_region(title)
+                quality_score = self._calculate_quality_score(title, source, published, region)
                 # 热度分数：使用_calculate_toutiao_score计算的热度分数
                 hot_score = score  # _calculate_toutiao_score计算的热度分数
                 items.append({
@@ -244,7 +245,7 @@ class NewsService:
                     'link': link,
                     'published': published,
                     'source': source,
-                    'region': '国内',
+                    'region': region,
                     'quality_score': quality_score,
                     'hot_score': hot_score,
                     'source_weight': 15,
@@ -255,7 +256,7 @@ class NewsService:
 
 
     def _classify_region(self, title, source):
-        """根据新闻标题和来源分类地区"""
+        """根据新闻标题和来源分类地区（主要针对国际新闻）"""
         title_lower = title.lower()
         source_lower = source.lower()
         
@@ -319,6 +320,56 @@ class NewsService:
         
         # 默认分类
         return '其他'
+    
+    def _classify_domestic_region(self, title):
+        """根据新闻标题分类国内地区"""
+        title_lower = title.lower()
+        
+        # 中国省份和城市关键词
+        regions = {
+            '北京': ['北京', 'beijing', '首都', '央视', '中央', '中南海', '天安门'],
+            '上海': ['上海', 'shanghai', '浦东', '浦西', '东方明珠'],
+            '广东': ['广东', '广州', '深圳', 'guangdong', 'guangzhou', 'shenzhen', '珠三角', '大湾区'],
+            '浙江': ['浙江', '杭州', '宁波', 'zhejiang', 'hangzhou', 'ningbo', '阿里巴巴'],
+            '江苏': ['江苏', '南京', '苏州', 'jiangsu', 'nanjing', 'suzhou', '无锡'],
+            '四川': ['四川', '成都', 'sichuan', 'chengdu', '天府', '川'],
+            '重庆': ['重庆', 'chongqing', '山城'],
+            '天津': ['天津', 'tianjin'],
+            '湖北': ['湖北', '武汉', 'hubei', 'wuhan'],
+            '陕西': ['陕西', '西安', 'shaanxi', 'xi\'an', '西安'],
+            '河南': ['河南', '郑州', 'henan', 'zhengzhou'],
+            '山东': ['山东', '济南', '青岛', 'shandong', 'jinan', 'qingdao'],
+            '福建': ['福建', '厦门', '福州', 'fujian', 'xiamen', 'fuzhou'],
+            '湖南': ['湖南', '长沙', 'hunan', 'changsha'],
+            '安徽': ['安徽', '合肥', 'anhui', 'hefei'],
+            '辽宁': ['辽宁', '沈阳', '大连', 'liaoning', 'shenyang', 'dalian'],
+            '吉林': ['吉林', '长春', 'jilin', 'changchun'],
+            '黑龙江': ['黑龙江', '哈尔滨', 'heilongjiang', 'harbin'],
+            '河北': ['河北', '石家庄', 'hebei', 'shijiazhuang'],
+            '山西': ['山西', '太原', '吕梁', 'shanxi', 'taiyuan', 'lvliang'],
+            '内蒙古': ['内蒙古', '呼和浩特', 'neimenggu', 'hohhot'],
+            '新疆': ['新疆', '乌鲁木齐', 'xinjiang', 'wulumuqi'],
+            '西藏': ['西藏', '拉萨', 'xizang', 'tibet', 'lhasa'],
+            '云南': ['云南', '昆明', 'yunnan', 'kunming'],
+            '贵州': ['贵州', '贵阳', 'guizhou', 'guiyang'],
+            '甘肃': ['甘肃', '兰州', 'gansu', 'lanzhou'],
+            '青海': ['青海', '西宁', 'qinghai', 'xining'],
+            '宁夏': ['宁夏', '银川', 'ningxia', 'yinchuan'],
+            '广西': ['广西', '南宁', 'guangxi', 'nanning'],
+            '海南': ['海南', '海口', '三亚', 'hainan', 'haikou', 'sanya'],
+            '香港': ['香港', 'hongkong', '港'],
+            '澳门': ['澳门', 'macau', 'macao'],
+            '台湾': ['台湾', '台', 'taiwan']
+        }
+        
+        # 检查每个地区的关键词
+        for region, keywords in regions.items():
+            for keyword in keywords:
+                if keyword.lower() in title_lower:
+                    return region
+        
+        # 默认返回"国内"
+        return '国内'
     
     def _get_source_weight(self, source):
         """根据新闻来源确定权重"""

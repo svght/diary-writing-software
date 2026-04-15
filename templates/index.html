@@ -59,10 +59,42 @@
         </div>
         <div class="news-options">
           <input type="text" id="domesticNewsSearch" class="control-input news-search" placeholder="搜索国内新闻标题或来源...">
-          <select id="sourceFilter" class="control-input source-filter">
-            <option value="">所有来源</option>
-            <option value="头条">头条</option>
-            <option value="微博">微博</option>
+          <select id="domesticRegionFilter" class="control-input region-filter">
+            <option value="">所有地区</option>
+            <option value="北京">北京</option>
+            <option value="上海">上海</option>
+            <option value="广东">广东</option>
+            <option value="浙江">浙江</option>
+            <option value="江苏">江苏</option>
+            <option value="四川">四川</option>
+            <option value="重庆">重庆</option>
+            <option value="天津">天津</option>
+            <option value="湖北">湖北</option>
+            <option value="陕西">陕西</option>
+            <option value="河南">河南</option>
+            <option value="山东">山东</option>
+            <option value="福建">福建</option>
+            <option value="湖南">湖南</option>
+            <option value="安徽">安徽</option>
+            <option value="辽宁">辽宁</option>
+            <option value="吉林">吉林</option>
+            <option value="黑龙江">黑龙江</option>
+            <option value="河北">河北</option>
+            <option value="山西">山西</option>
+            <option value="内蒙古">内蒙古</option>
+            <option value="新疆">新疆</option>
+            <option value="西藏">西藏</option>
+            <option value="云南">云南</option>
+            <option value="贵州">贵州</option>
+            <option value="甘肃">甘肃</option>
+            <option value="青海">青海</option>
+            <option value="宁夏">宁夏</option>
+            <option value="广西">广西</option>
+            <option value="海南">海南</option>
+            <option value="香港">香港</option>
+            <option value="澳门">澳门</option>
+            <option value="台湾">台湾</option>
+            <option value="国内">国内（其他）</option>
           </select>
         </div>
         <div class="news-tabs" id="domesticTabs"></div>
@@ -176,7 +208,7 @@
     const newsSearch = document.getElementById('newsSearch');
     const regionFilter = document.getElementById('regionFilter');
     const domesticNewsSearch = document.getElementById('domesticNewsSearch');
-    const sourceFilter = document.getElementById('sourceFilter');
+    const domesticRegionFilter = document.getElementById('domesticRegionFilter');
 
     let currentWeather = null;
     let selectedImages = [];
@@ -342,14 +374,10 @@
         );
       }
 
-      // 来源过滤
-      const selectedSource = sourceFilter.value;
-      if (selectedSource) {
-        if (selectedSource === '头条') {
-          filtered = filtered.filter(item => !item.source.includes('新浪') && !item.source.includes('焦点'));
-        } else if (selectedSource === '微博') {
-          filtered = filtered.filter(item => item.source.includes('新浪') || item.source.includes('焦点'));
-        }
+      // 地区过滤
+      const selectedRegion = domesticRegionFilter.value;
+      if (selectedRegion) {
+        filtered = filtered.filter(item => item.region === selectedRegion);
       }
 
       // 按热度排序（热度分数高的在前）
@@ -524,7 +552,7 @@
       applyDomesticFilters();
     });
 
-    sourceFilter.addEventListener('change', () => {
+    domesticRegionFilter.addEventListener('change', () => {
       applyDomesticFilters();
     });
 
