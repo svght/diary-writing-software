@@ -57,6 +57,14 @@
           <span>国内热点新闻</span>
           <button id="refreshNewsHeader" class="button button-secondary button-small">刷新</button>
         </div>
+        <div class="news-options">
+          <input type="text" id="domesticNewsSearch" class="control-input news-search" placeholder="搜索国内新闻标题或来源...">
+          <select id="sourceFilter" class="control-input source-filter">
+            <option value="">所有来源</option>
+            <option value="头条">头条</option>
+            <option value="微博">微博</option>
+          </select>
+        </div>
         <div class="news-tabs" id="domesticTabs"></div>
         <div class="news-meta" id="domesticNewsLoading">正在加载国内新闻...</div>
         <ul class="news-list" id="domesticNews"></ul>
@@ -65,6 +73,18 @@
         <div class="card-header news-header">
           <span>国际热点新闻</span>
           <button id="refreshNewsHeader2" class="button button-secondary button-small">刷新</button>
+        </div>
+        <div class="news-options">
+          <input type="text" id="newsSearch" class="control-input news-search" placeholder="搜索新闻标题或来源...">
+          <select id="regionFilter" class="control-input region-filter">
+            <option value="">所有地区</option>
+            <option value="北美">北美</option>
+            <option value="欧洲">欧洲</option>
+            <option value="亚洲">亚洲</option>
+            <option value="中东">中东</option>
+            <option value="全球">全球</option>
+            <option value="其他">其他</option>
+          </select>
         </div>
         <div class="news-meta" id="internationalNewsLoading">正在加载国际新闻...</div>
         <ul class="news-list" id="internationalNews"></ul>
@@ -151,12 +171,18 @@
     const saveDirInput = document.getElementById('saveDirInput');
     const saveDirLabel = document.getElementById('saveDirLabel');
     const domesticTabs = document.getElementById('domesticTabs');
-    const baseDir = {{ base_dir | tojson }};
-    const defaultSaveDir = {{ default_save_dir | tojson }};
+    const baseDir = String.raw`{{ base_dir }}`;
+    const defaultSaveDir = String.raw`{{ default_save_dir }}`;
+    const newsSearch = document.getElementById('newsSearch');
+    const regionFilter = document.getElementById('regionFilter');
+    const domesticNewsSearch = document.getElementById('domesticNewsSearch');
+    const sourceFilter = document.getElementById('sourceFilter');
 
     let currentWeather = null;
     let selectedImages = [];
     let selectedVideos = [];
+    let allInternationalNews = [];
+    let allDomesticNews = [];
 
     function ensureCityOption(city) {
       if (!city) return;
@@ -286,11 +312,141 @@
         if (!data.success) {
           throw new Error('新闻加载失败');
         }
-        renderDomesticNews(data.domestic);
-        renderNewsList(internationalNews, data.international, internationalNewsLoading);
+        // 保存所有国内新闻和国际新闻用于过滤
+        allDomesticNews = data.domestic || [];
+        allInternationalNews = data.international || [];
+        // 显示所有新闻（初始状态）
+        applyDomesticFilters();
+        applyNewsFilters();
       } catch (error) {
         domesticNewsLoading.textContent = '国内新闻加载失败';
         internationalNewsLoading.textContent = '国际新闻加载失败';
+      }
+    }
+
+    function applyDomesticFilters() {
+      if (!allDomesticNews || !allDomesticNews.length) {
+        domesticNewsLoading.textContent = '没有可显示的新闻。';
+        domesticNews.innerHTML = '';
+        return;
+      }
+
+      let filtered = [...allDomesticNews];
+
+      // 搜索过滤
+      const searchTerm = domesticNewsSearch.value.toLowerCase().trim();
+      if (searchTerm) {
+        filtered = filtered.filter(item => 
+          (item.title && item.title.toLowerCase().includes(searchTerm)) ||
+          (item.source && item.source.toLowerCase().includes(searchTerm))
+        );
+      }
+
+      // 来源过滤
+      const selectedSource = sourceFilter.value;
+      if (selectedSource) {
+        if (selectedSource === '头条') {
+          filtered = filtered.filter(item => !item.source.includes('新浪') && !item.source.includes('焦点'));
+        } else if (selectedSource === '微博') {
+          filtered = filtered.filter(item => item.source.includes('新浪') || item.source.includes('焦点'));
+        }
+      }
+
+      // 按热度排序（热度分数高的在前）
+      filtered.sort((a, b) => {
+        const scoreA = a.hot_score || 0;
+        const scoreB = b.hot_score || 0;
+        return scoreB - scoreA;
+      });
+
+      // 渲染过滤后的新闻（使用现有分组逻辑）
+      if (filtered.length === 0) {
+        domesticNewsLoading.textContent = '没有匹配的新闻。';
+        domesticNews.innerHTML = '';
+        domesticTabs.innerHTML = '';
+      } else {
+        // 使用分组逻辑渲染过滤后的新闻
+        const grouped = {};
+        filtered.forEach(item => {
+          let category = '头条'; // Default to Toutiao
+          if (item.source && (item.source.includes('新浪') || item.source.includes('焦点'))) {
+            category = '微博';
+          }
+          if (!grouped[category]) grouped[category] = [];
+          grouped[category].push(item);
+        });
+        
+        const sources = Object.keys(grouped);
+        // 更新标签页
+        domesticTabs.innerHTML = sources.map(source => `<button class="news-tab" data-source="${source}">${source}</button>`).join('');
+        // 添加点击事件
+        domesticTabs.querySelectorAll('.news-tab').forEach(tab => {
+          tab.addEventListener('click', () => {
+            domesticTabs.querySelectorAll('.news-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            renderNewsList(domesticNews, grouped[tab.dataset.source], domesticNewsLoading);
+          });
+        });
+        // 默认显示第一个标签页
+        if (sources.length > 0) {
+          domesticTabs.querySelector('.news-tab').classList.add('active');
+          renderNewsList(domesticNews, grouped[sources[0]], domesticNewsLoading);
+        } else {
+          domesticNewsLoading.textContent = '';
+          domesticNews.innerHTML = '';
+        }
+      }
+    }
+
+    function applyNewsFilters() {
+      if (!allInternationalNews || !allInternationalNews.length) {
+        internationalNewsLoading.textContent = '没有可显示的新闻。';
+        internationalNews.innerHTML = '';
+        return;
+      }
+
+      let filtered = [...allInternationalNews];
+
+      // 搜索过滤
+      const searchTerm = newsSearch.value.toLowerCase().trim();
+      if (searchTerm) {
+        filtered = filtered.filter(item => 
+          (item.title && item.title.toLowerCase().includes(searchTerm)) ||
+          (item.source && item.source.toLowerCase().includes(searchTerm)) ||
+          (item.region && item.region.toLowerCase().includes(searchTerm))
+        );
+      }
+
+      // 地区过滤
+      const selectedRegion = regionFilter.value;
+      if (selectedRegion) {
+        filtered = filtered.filter(item => item.region === selectedRegion);
+      }
+
+      // 按热度排序（热度分数高的在前）
+      filtered.sort((a, b) => {
+        const scoreA = a.hot_score || 0;
+        const scoreB = b.hot_score || 0;
+        return scoreB - scoreA;
+      });
+
+      // 渲染过滤后的新闻
+      if (filtered.length === 0) {
+        internationalNewsLoading.textContent = '没有匹配的新闻。';
+        internationalNews.innerHTML = '';
+      } else {
+        internationalNewsLoading.textContent = '';
+        internationalNews.innerHTML = filtered.map(item => `
+          <li class="news-item">
+            <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+            <div class="news-meta">
+              <span>来源：${item.source || '未知'}</span>
+              ${item.region ? `<span class="news-region">地区：${item.region}</span>` : ''}
+              ${item.quality_score ? `<span class="news-quality">质量：${item.quality_score}/100</span>` : ''}
+              ${item.published ? `<span>发布时间：${item.published}</span>` : ''}
+            </div>
+          </li>
+        `).join('');
       }
     }
 
@@ -361,6 +517,24 @@
     refreshWeather.addEventListener('click', () => {
       saveMessage.textContent = '正在刷新天气...';
       loadWeather(citySelect.value);
+    });
+
+    // 搜索和过滤功能 - 国内新闻
+    domesticNewsSearch.addEventListener('input', () => {
+      applyDomesticFilters();
+    });
+
+    sourceFilter.addEventListener('change', () => {
+      applyDomesticFilters();
+    });
+
+    // 搜索和过滤功能 - 国际新闻
+    newsSearch.addEventListener('input', () => {
+      applyNewsFilters();
+    });
+
+    regionFilter.addEventListener('change', () => {
+      applyNewsFilters();
     });
 
     const refreshNewsAction = () => {

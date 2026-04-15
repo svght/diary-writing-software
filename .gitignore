@@ -59,3 +59,8 @@ saved_diaries/archives/
 *.env
 config.ini
 secrets.py
+
+# Test and debug files
+test_*.py
+debug_*.py
+test_page.html

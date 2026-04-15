@@ -17,16 +17,22 @@ class NewsService:
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
 
-    def _fetch_feed(self, url):
-        response = requests.get(url, headers=self.headers, timeout=8)
-        response.raise_for_status()
-        response.encoding = response.apparent_encoding or 'utf-8'
-        return response.text
+    def _fetch_feed(self, url, timeout=5):
+        try:
+            response = requests.get(url, headers=self.headers, timeout=timeout)
+            response.raise_for_status()
+            response.encoding = response.apparent_encoding or 'utf-8'
+            return response.text
+        except requests.RequestException:
+            return None
 
-    def _fetch_json(self, url):
-        response = requests.get(url, headers=self.headers, timeout=8)
-        response.raise_for_status()
-        return response.json()
+    def _fetch_json(self, url, timeout=5):
+        try:
+            response = requests.get(url, headers=self.headers, timeout=timeout)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException:
+            return None
 
     def _clean_text(self, value):
         if not value:
@@ -56,11 +62,23 @@ class NewsService:
                 source_elem = entry.find('source')
                 source = self._clean_text(source_elem.text) if source_elem is not None and source_elem.text else feed_title
                 if title and link:
+                    # 第二阶段优化：添加地区分类和质量评分
+                    region = self._classify_region(title, source)
+                    quality_score = self._calculate_quality_score(title, source, pub_date, region)
+                    source_weight = self._get_source_weight(source)
+                    # 国际新闻热度分数：基于发布时间和质量评分
+                    hot_score = self._calculate_international_hot_score(pub_date, quality_score, region)
+                    
                     items.append({
                         'title': title,
                         'link': link,
                         'published': pub_date,
                         'source': source,
+                        'region': region,
+                        'quality_score': quality_score,
+                        'hot_score': hot_score,
+                        'source_weight': source_weight,
+                        'original_source': source,
                     })
         return items
 
@@ -217,14 +235,193 @@ class NewsService:
                     published = str(behot_time)
 
             if title and link:
+                # 为国内新闻也添加质量评分和热度分数
+                quality_score = self._calculate_quality_score(title, source, published, '国内')
+                # 热度分数：使用_calculate_toutiao_score计算的热度分数
+                hot_score = score  # _calculate_toutiao_score计算的热度分数
                 items.append({
                     'title': title,
                     'link': link,
                     'published': published,
                     'source': source,
+                    'region': '国内',
+                    'quality_score': quality_score,
+                    'hot_score': hot_score,
+                    'source_weight': 15,
+                    'original_source': source,
                 })
 
         return items
+
+
+    def _classify_region(self, title, source):
+        """根据新闻标题和来源分类地区"""
+        title_lower = title.lower()
+        source_lower = source.lower()
+        
+        # 北美相关关键词
+        north_america_keywords = [
+            'us', 'u.s.', 'united states', 'america', 'american', 'washington', 'new york', 'california',
+            'texas', 'canada', 'trump', 'biden', 'white house', 'congress', 'senate', 'house',
+            'north america', 'chicago', 'los angeles', 'miami', 'boston', 'detroit'
+        ]
+        
+        # 欧洲相关关键词
+        europe_keywords = [
+            'europe', 'european', 'eu', 'uk', 'britain', 'british', 'london', 'england', 'france', 'french',
+            'paris', 'germany', 'german', 'berlin', 'italy', 'italian', 'rome', 'spain', 'spanish', 'madrid',
+            'russia', 'russian', 'moscow', 'ukraine', 'kyiv', 'poland', 'warsaw', 'sweden', 'stockholm',
+            'norway', 'oslo', 'finland', 'helsinki', 'denmark', 'copenhagen'
+        ]
+        
+        # 亚洲相关关键词
+        asia_keywords = [
+            'asia', 'asian', 'china', 'chinese', 'beijing', 'shanghai', 'hong kong', 'taiwan', 'japan',
+            'japanese', 'tokyo', 'south korea', 'seoul', 'north korea', 'pyongyang', 'india', 'indian',
+            'delhi', 'mumbai', 'pakistan', 'islamabad', 'bangladesh', 'dhaka', 'vietnam', 'hanoi',
+            'singapore', 'malaysia', 'kuala lumpur', 'thailand', 'bangkok', 'philippines', 'manila'
+        ]
+        
+        # 中东相关关键词
+        middle_east_keywords = [
+            'middle east', 'israel', 'israeli', 'jerusalem', 'tel aviv', 'palestine', 'palestinian',
+            'gaza', 'west bank', 'iran', 'iranian', 'tehran', 'iraq', 'baghdad', 'syria', 'damascus',
+            'saudi arabia', 'riyadh', 'uae', 'dubai', 'qatar', 'doha', 'egypt', 'cairo',
+            'lebanon', 'beirut', 'jordan', 'amman', 'turkey', 'ankara', 'istanbul'
+        ]
+        
+        # 全球相关关键词
+        global_keywords = [
+            'global', 'world', 'international', 'climate', 'environment', 'pandemic', 'covid',
+            'united nations', 'un', 'world health', 'who', 'world bank', 'imf', 'global warming'
+        ]
+        
+        # 检查关键词
+        for keyword in north_america_keywords:
+            if keyword in title_lower or keyword in source_lower:
+                return '北美'
+        
+        for keyword in europe_keywords:
+            if keyword in title_lower or keyword in source_lower:
+                return '欧洲'
+        
+        for keyword in asia_keywords:
+            if keyword in title_lower or keyword in source_lower:
+                return '亚洲'
+        
+        for keyword in middle_east_keywords:
+            if keyword in title_lower or keyword in source_lower:
+                return '中东'
+        
+        for keyword in global_keywords:
+            if keyword in title_lower or keyword in source_lower:
+                return '全球'
+        
+        # 默认分类
+        return '其他'
+    
+    def _get_source_weight(self, source):
+        """根据新闻来源确定权重"""
+        source_lower = source.lower()
+        
+        # 主要国际新闻源权重较高
+        if 'bbc' in source_lower or 'reuters' in source_lower or 'ap' in source_lower:
+            return 30
+        elif 'npr' in source_lower:
+            return 25
+        elif 'cnn' in source_lower or 'fox' in source_lower or 'bloomberg' in source_lower:
+            return 20
+        elif 'guardian' in source_lower or 'independent' in source_lower:
+            return 18
+        else:
+            # 其他新闻源
+            return 15
+    
+    def _calculate_quality_score(self, title, source, pub_date, region):
+        """计算新闻质量评分 (0-100)"""
+        score = 70  # 基础分数
+        
+        # 根据来源权重调整
+        source_weight = self._get_source_weight(source)
+        score += (source_weight - 15) * 0.5  # 来源权重贡献
+        
+        # 标题质量评估
+        title_length = len(title)
+        if title_length > 30 and title_length < 100:
+            score += 5  # 适中长度标题更好
+        elif title_length >= 100:
+            score -= 5   # 过长标题可读性差
+        
+        # 检查标题是否完整（包含主要信息）
+        if '?' not in title and '...' not in title:
+            score += 5
+        
+        # 根据地区调整（某些地区新闻可能质量更高）
+        if region == '北美' or region == '欧洲':
+            score += 3
+        elif region == '全球':
+            score += 2
+        
+        # 发布时间影响（如果新闻是最近的）
+        # 这里简单判断，实际可以解析pub_date
+        if '2026' in pub_date:
+            score += 5
+        
+        # 确保分数在合理范围内
+        score = max(60, min(score, 95))
+        
+        return int(score)
+    
+    def _calculate_international_hot_score(self, pub_date, quality_score, region):
+        """计算国际新闻热度分数"""
+        score = 500  # 基础热度分数
+        
+        # 基于发布时间的新鲜度
+        import re
+        from datetime import datetime, timezone
+        
+        # 尝试解析发布时间
+        try:
+            # 处理常见的时间格式
+            if re.search(r'\d{4}-\d{2}-\d{2}', pub_date):
+                # 类似 "2026-04-14 16:34:06" 格式
+                dt = datetime.strptime(pub_date.split()[0], '%Y-%m-%d')
+            elif re.search(r'\w{3}, \d{2} \w{3} \d{4}', pub_date):
+                # 类似 "Tue, 14 Apr 2026 16:34:06 -0400" 格式
+                dt = datetime.strptime(pub_date[:16], '%a, %d %b %Y')
+            else:
+                # 默认使用当前时间
+                dt = datetime.now()
+        except Exception:
+            dt = datetime.now()
+        
+        # 计算时间差（小时）
+        now = datetime.now(timezone.utc)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        
+        time_diff_hours = (now - dt).total_seconds() / 3600
+        
+        # 时间越近，热度越高
+        if time_diff_hours < 24:
+            score += 300  # 24小时内的新闻
+        elif time_diff_hours < 72:
+            score += 200  # 3天内的新闻
+        elif time_diff_hours < 168:
+            score += 100  # 一周内的新闻
+        
+        # 质量评分贡献
+        score += quality_score * 3
+        
+        # 地区热度调整（某些地区新闻更受关注）
+        if region == '中东' or region == '北美':
+            score += 50
+        elif region == '欧洲':
+            score += 40
+        elif region == '亚洲':
+            score += 30
+        
+        return int(score)
 
     def get_hot_news(self):
         domestic = []

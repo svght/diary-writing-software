@@ -472,3 +472,48 @@ textarea {
     font-size: 32px;
   }
 }
+
+/* 新闻搜索和过滤样式 */
+.news-options {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.news-search {
+  flex: 1;
+  min-width: 200px;
+}
+
+.region-filter {
+  width: 150px;
+}
+
+.news-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 12px !important;
+}
+
+.news-region {
+  padding: 2px 6px;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.news-quality {
+  padding: 2px 6px;
+  background-color: #dcfce7;
+  color: #166534;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.news-meta span:not(.news-region):not(.news-quality) {
+  color: #6b7280;
+}
