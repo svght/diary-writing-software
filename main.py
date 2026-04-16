@@ -582,25 +582,23 @@ def api_trend_statistics():
 
 @app.route('/api/region/distribution')
 def api_region_distribution():
-    """获取地区分布数据"""
+    """获取地区分布数据（饼状图功能已移除）"""
     try:
         # 获取参数
-        dist_type = request.args.get('type', 'country')  # country, region
+        dist_type = request.args.get('type', 'country')  # country (饼状图功能已移除)
         limit = request.args.get('limit', '20')
-        
+
         analyzer = get_region_analyzer()
-        
+
         if dist_type == 'country':
             limit_int = int(limit) if limit and limit.isdigit() else 20
             result = analyzer.get_country_distribution(limit_int)
-        elif dist_type == 'region':
-            result = analyzer.get_region_distribution()
         else:
             return jsonify(
                 success=False,
-                error='不支持的分布类型，请使用 country 或 region'
+                error='不支持的分布类型，请使用 country（饼状图功能已移除）'
             ), 400
-        
+
         return jsonify(result)
         
     except Exception as e:
