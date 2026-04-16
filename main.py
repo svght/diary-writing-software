@@ -17,6 +17,12 @@ from flask import Flask, abort, jsonify, render_template, request, send_from_dir
 from weather_service import WeatherService
 from location_service import LocationService, CHINESE_CITIES
 from news_service import NewsService
+from news_analyzer import get_analyzer, extract_entities_from_news
+from news_summarizer import get_summarizer, generate_summary_for_news
+from sentiment_analyzer import get_sentiment_analyzer, analyze_sentiment_from_news
+from trend_analyzer import get_trend_analyzer, update_trend_with_news
+from region_analyzer import get_region_analyzer, update_region_with_news
+from deepseek_comment_generator import get_deepseek_generator
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 weather_service = WeatherService()
@@ -182,7 +188,492 @@ def api_weather():
 @app.route('/api/news')
 def api_news():
     news = news_service.get_hot_news()
+    
+    # 更新热度趋势数据
+    try:
+        update_trend_with_news(news)
+    except Exception as e:
+        print(f"更新趋势数据失败: {e}")
+    
+    # 更新地区分布数据
+    try:
+        # 合并国内和国际新闻
+        all_news = []
+        if 'domestic' in news:
+            all_news.extend(news['domestic'])
+        if 'international' in news:
+            all_news.extend(news['international'])
+        
+        if all_news:
+            update_region_with_news(all_news)
+    except Exception as e:
+        print(f"更新地区数据失败: {e}")
+    
     return jsonify(success=True, **news)
+
+
+@app.route('/api/news/analyze/entities', methods=['POST'])
+def api_analyze_entities():
+    """分析新闻实体（人物+国家）"""
+    try:
+        data = request.json or {}
+        
+        # 支持两种输入格式：
+        # 1. 直接提供新闻内容
+        # 2. 提供新闻ID从现有新闻中查找
+        text = data.get('text', '')
+        title = data.get('title', '')
+        news_id = data.get('news_id')
+        
+        # 如果没有提供文本，尝试从现有新闻中查找
+        if not text and news_id:
+            # 获取所有新闻
+            news_data = news_service.get_hot_news()
+            # 在国内和国际新闻中查找
+            for category in ['domestic', 'international']:
+                if category in news_data:
+                    for item in news_data[category]:
+                        # 简单比较，实际应用中可能需要更准确的ID匹配
+                        if str(item.get('link', '')).find(str(news_id)) != -1 or \
+                           str(item.get('title', '')).find(str(news_id)) != -1:
+                            title = item.get('title', '')
+                            # 尝试获取内容，如果没有则使用标题
+                            content = item.get('content', '') or item.get('description', '') or title
+                            text = content
+                            break
+        
+        if not text and title:
+            text = title
+        
+        if not text:
+            return jsonify(
+                success=False, 
+                error='请提供新闻文本、标题或新闻ID'
+            ), 400
+        
+        # 使用分析器提取实体
+        analyzer = get_analyzer()
+        result = analyzer.extract_entities(text, title)
+        
+        return jsonify({
+            "success": True,
+            "entities": result,
+            "text_preview": text[:100] + "..." if len(text) > 100 else text
+        })
+        
+    except Exception as e:
+        return jsonify(
+            success=False,
+            error=f'分析失败: {str(e)}'
+        ), 500
+
+
+@app.route('/api/news/analyze/summary', methods=['POST'])
+def api_analyze_summary():
+    """生成新闻摘要"""
+    try:
+        data = request.json or {}
+        
+        # 支持两种输入格式：
+        # 1. 直接提供新闻内容
+        # 2. 提供新闻ID从现有新闻中查找
+        text = data.get('text', '')
+        title = data.get('title', '')
+        news_id = data.get('news_id')
+        
+        # 如果没有提供文本，尝试从现有新闻中查找
+        if not text and news_id:
+            # 获取所有新闻
+            news_data = news_service.get_hot_news()
+            # 在国内和国际新闻中查找
+            for category in ['domestic', 'international']:
+                if category in news_data:
+                    for item in news_data[category]:
+                        # 简单比较，实际应用中可能需要更准确的ID匹配
+                        if str(item.get('link', '')).find(str(news_id)) != -1 or \
+                           str(item.get('title', '')).find(str(news_id)) != -1:
+                            title = item.get('title', '')
+                            # 尝试获取内容，如果没有则使用标题
+                            content = item.get('content', '') or item.get('description', '') or title
+                            text = content
+                            break
+        
+        if not text and title:
+            text = title
+        
+        if not text:
+            return jsonify(
+                success=False, 
+                error='请提供新闻文本、标题或新闻ID'
+            ), 400
+        
+        # 构建新闻项（模拟结构）
+        news_item = {
+            'title': title,
+            'content': text,
+            'source': data.get('source', ''),
+            'region': data.get('region', ''),
+            'description': text
+        }
+        
+        # 使用摘要生成器生成摘要
+        summarizer = get_summarizer()
+        result = summarizer.summarize_news(news_item)
+        
+        return jsonify({
+            "success": True,
+            "summary": result
+        })
+        
+    except Exception as e:
+        return jsonify(
+            success=False,
+            error=f'摘要生成失败: {str(e)}'
+        ), 500
+
+
+@app.route('/api/news/analyze/sentiment', methods=['POST'])
+def api_analyze_sentiment():
+    """分析新闻情感"""
+    try:
+        data = request.json or {}
+        
+        # 支持两种输入格式：
+        # 1. 直接提供新闻内容
+        # 2. 提供新闻ID从现有新闻中查找
+        text = data.get('text', '')
+        title = data.get('title', '')
+        news_id = data.get('news_id')
+        
+        # 如果没有提供文本，尝试从现有新闻中查找
+        if not text and news_id:
+            # 获取所有新闻
+            news_data = news_service.get_hot_news()
+            # 在国内和国际新闻中查找
+            for category in ['domestic', 'international']:
+                if category in news_data:
+                    for item in news_data[category]:
+                        # 简单比较，实际应用中可能需要更准确的ID匹配
+                        if str(item.get('link', '')).find(str(news_id)) != -1 or \
+                           str(item.get('title', '')).find(str(news_id)) != -1:
+                            title = item.get('title', '')
+                            # 尝试获取内容，如果没有则使用标题
+                            content = item.get('content', '') or item.get('description', '') or title
+                            text = content
+                            break
+        
+        if not text and title:
+            text = title
+        
+        if not text:
+            return jsonify(
+                success=False, 
+                error='请提供新闻文本、标题或新闻ID'
+            ), 400
+        
+        # 使用情感分析器分析情感
+        analyzer = get_sentiment_analyzer()
+        result = analyzer.analyze_sentiment(text, title)
+        
+        return jsonify({
+            "success": True,
+            "sentiment": result
+        })
+        
+    except Exception as e:
+        return jsonify(
+            success=False,
+            error=f'情感分析失败: {str(e)}'
+        ), 500
+
+
+@app.route('/api/news/analyze/comment', methods=['POST'])
+def api_analyze_comment():
+    """生成新闻评论"""
+    try:
+        data = request.json or {}
+        
+        # 支持两种输入格式：
+        # 1. 直接提供新闻内容
+        # 2. 提供新闻ID从现有新闻中查找
+        text = data.get('text', '')
+        title = data.get('title', '')
+        news_id = data.get('news_id')
+        
+        # 如果没有提供文本，尝试从现有新闻中查找
+        if not text and news_id:
+            # 获取所有新闻
+            news_data = news_service.get_hot_news()
+            # 在国内和国际新闻中查找
+            for category in ['domestic', 'international']:
+                if category in news_data:
+                    for item in news_data[category]:
+                        # 简单比较，实际应用中可能需要更准确的ID匹配
+                        if str(item.get('link', '')).find(str(news_id)) != -1 or \
+                           str(item.get('title', '')).find(str(news_id)) != -1:
+                            title = item.get('title', '')
+                            # 尝试获取内容，如果没有则使用标题
+                            content = item.get('content', '') or item.get('description', '') or title
+                            text = content
+                            break
+        
+        if not text and title:
+            text = title
+        
+        if not text:
+            return jsonify(
+                success=False, 
+                error='请提供新闻文本、标题或新闻ID'
+            ), 400
+        
+        # 使用DeepSeek生成器生成评论
+        generator = get_deepseek_generator()
+        result = generator.generate_comment_for_news(title, text, news_id)
+        
+        return jsonify({
+            "success": result.success,
+            "comment": result.comment,
+            "error": result.error,
+            "model": result.model,
+            "usage_tokens": result.usage_tokens,
+            "generation_time": result.generation_time,
+            "cached": result.cached,
+            "news_id": result.news_id,
+            "news_title": result.news_title
+        })
+        
+    except Exception as e:
+        return jsonify(
+            success=False,
+            error=f'评论生成失败: {str(e)}'
+        ), 500
+
+
+@app.route('/api/news/analyze/comment/batch', methods=['POST'])
+def api_analyze_comment_batch():
+    """批量生成新闻评论"""
+    try:
+        data = request.json or {}
+        
+        news_items = data.get('news_items', [])
+        if not news_items:
+            return jsonify(
+                success=False, 
+                error='请提供新闻列表'
+            ), 400
+        
+        # 验证新闻项目格式
+        validated_items = []
+        for i, item in enumerate(news_items):
+            title = item.get('title', '')
+            if not title:
+                return jsonify(
+                    success=False,
+                    error=f'第{i+1}个新闻项缺少标题'
+                ), 400
+            
+            validated_items.append({
+                'title': title,
+                'content': item.get('content', ''),
+                'id': item.get('id', f'news_{i}')
+            })
+        
+        # 使用DeepSeek生成器批量生成评论
+        generator = get_deepseek_generator()
+        max_concurrent = data.get('max_concurrent', 3)
+        results = generator.generate_comments_batch(validated_items, max_concurrent)
+        
+        # 转换为可序列化的字典列表
+        results_list = []
+        for result in results:
+            results_list.append({
+                'success': result.success,
+                'comment': result.comment,
+                'error': result.error,
+                'model': result.model,
+                'usage_tokens': result.usage_tokens,
+                'generation_time': result.generation_time,
+                'cached': result.cached,
+                'news_id': result.news_id,
+                'news_title': result.news_title
+            })
+        
+        return jsonify({
+            "success": True,
+            "results": results_list,
+            "total": len(results_list),
+            "successful": sum(1 for r in results_list if r['success']),
+            "failed": sum(1 for r in results_list if not r['success'])
+        })
+        
+    except Exception as e:
+        return jsonify(
+            success=False,
+            error=f'批量评论生成失败: {str(e)}'
+        ), 500
+
+
+@app.route('/api/deepseek/usage')
+def api_deepseek_usage():
+    """获取DeepSeek使用量统计"""
+    try:
+        generator = get_deepseek_generator()
+        usage_info = generator.get_usage_info()
+        
+        return jsonify({
+            "success": True,
+            "usage_info": usage_info
+        })
+        
+    except Exception as e:
+        return jsonify(
+            success=False,
+            error=f'获取使用量统计失败: {str(e)}'
+        ), 500
+
+
+@app.route('/api/trend/hotness')
+def api_trend_hotness():
+    """获取热度趋势数据"""
+    try:
+        # 获取参数
+        trend_type = request.args.get('type', 'hourly')  # hourly, daily, weekly
+        period = request.args.get('period')
+        
+        analyzer = get_trend_analyzer()
+        
+        if trend_type == 'hourly':
+            hours = int(period) if period and period.isdigit() else 24
+            result = analyzer.get_hourly_trend(hours)
+        elif trend_type == 'daily':
+            days = int(period) if period and period.isdigit() else 7
+            result = analyzer.get_daily_trend(days)
+        elif trend_type == 'weekly':
+            weeks = int(period) if period and period.isdigit() else 4
+            result = analyzer.get_weekly_trend(weeks)
+        else:
+            return jsonify(
+                success=False,
+                error='不支持的趋势类型，请使用 hourly, daily 或 weekly'
+            ), 400
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify(
+            success=False,
+            error=f'获取趋势数据失败: {str(e)}'
+        ), 500
+
+
+@app.route('/api/trend/statistics')
+def api_trend_statistics():
+    """获取趋势统计信息"""
+    try:
+        analyzer = get_trend_analyzer()
+        result = analyzer.get_trend_statistics()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(
+            success=False,
+            error=f'获取统计信息失败: {str(e)}'
+        ), 500
+
+
+@app.route('/api/region/distribution')
+def api_region_distribution():
+    """获取地区分布数据"""
+    try:
+        # 获取参数
+        dist_type = request.args.get('type', 'country')  # country, region
+        limit = request.args.get('limit', '20')
+        
+        analyzer = get_region_analyzer()
+        
+        if dist_type == 'country':
+            limit_int = int(limit) if limit and limit.isdigit() else 20
+            result = analyzer.get_country_distribution(limit_int)
+        elif dist_type == 'region':
+            result = analyzer.get_region_distribution()
+        else:
+            return jsonify(
+                success=False,
+                error='不支持的分布类型，请使用 country 或 region'
+            ), 400
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify(
+            success=False,
+            error=f'获取地区分布数据失败: {str(e)}'
+        ), 500
+
+
+@app.route('/api/region/statistics')
+def api_region_statistics():
+    """获取地区统计信息"""
+    try:
+        analyzer = get_region_analyzer()
+        result = analyzer.get_region_statistics()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(
+            success=False,
+            error=f'获取地区统计信息失败: {str(e)}'
+        ), 500
+
+
+@app.route('/api/region/news/by-country', methods=['GET'])
+def api_region_news_by_country():
+    """获取指定国家的新闻"""
+    try:
+        country = request.args.get('country', '')
+        limit = request.args.get('limit', '10')
+        
+        if not country:
+            return jsonify(
+                success=False,
+                error='请提供国家名称'
+            ), 400
+        
+        limit_int = int(limit) if limit and limit.isdigit() else 10
+        
+        analyzer = get_region_analyzer()
+        result = analyzer.get_news_by_country(country, limit_int)
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify(
+            success=False,
+            error=f'获取国家新闻失败: {str(e)}'
+        ), 500
+
+
+@app.route('/api/region/news/by-region', methods=['GET'])
+def api_region_news_by_region():
+    """获取指定地区的新闻"""
+    try:
+        region = request.args.get('region', '')
+        limit = request.args.get('limit', '10')
+        
+        if not region:
+            return jsonify(
+                success=False,
+                error='请提供地区名称'
+            ), 400
+        
+        limit_int = int(limit) if limit and limit.isdigit() else 10
+        
+        analyzer = get_region_analyzer()
+        result = analyzer.get_news_by_region(region, limit_int)
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify(
+            success=False,
+            error=f'获取地区新闻失败: {str(e)}'
+        ), 500
 
 
 @app.route('/api/geocode')

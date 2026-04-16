@@ -54,6 +54,7 @@ Thumbs.db
 uploads/
 saved_diaries/drafts/
 saved_diaries/archives/
+comments_cache/
 
 # Config files (if any)
 *.env
@@ -64,3 +65,6 @@ secrets.py
 test_*.py
 debug_*.py
 test_page.html
+
+# Data files
+*.json

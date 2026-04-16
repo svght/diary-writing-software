@@ -1,0 +1,463 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+热度趋势分析模块 - 第四阶段优化迭代4
+实现热度趋势数据收集和可视化：
+1. 24小时热度变化折线图
+2. 7天热度趋势图表
+3. 时间筛选功能
+"""
+
+import time
+import json
+import os
+from datetime import datetime, timedelta
+from typing import Dict, List, Any, Optional
+from collections import defaultdict
+
+
+class TrendAnalyzer:
+    """热度趋势分析器 - 收集和分析新闻热度趋势"""
+    
+    def __init__(self, data_file: str = "trend_data.json"):
+        """初始化分析器"""
+        self.data_file = data_file
+        self.trend_data = self._load_trend_data()
+        
+    def _load_trend_data(self) -> Dict[str, Any]:
+        """加载趋势数据"""
+        if os.path.exists(self.data_file):
+            try:
+                with open(self.data_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except Exception:
+                return self._create_empty_data()
+        else:
+            return self._create_empty_data()
+    
+    def _create_empty_data(self) -> Dict[str, Any]:
+        """创建空数据模板"""
+        return {
+            "hourly": [],      # 每小时数据
+            "daily": [],       # 每日数据
+            "weekly": [],      # 每周数据
+            "last_update": None,
+            "statistics": {
+                "total_news": 0,
+                "avg_hot_score": 0,
+                "max_hot_score": 0,
+                "min_hot_score": 0
+            }
+        }
+    
+    def _save_trend_data(self):
+        """保存趋势数据"""
+        try:
+            with open(self.data_file, 'w', encoding='utf-8') as f:
+                json.dump(self.trend_data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"保存趋势数据失败: {e}")
+    
+    def update_trend_data(self, news_items: List[Dict[str, Any]]):
+        """更新趋势数据"""
+        if not news_items:
+            return
+        
+        now = datetime.now()
+        current_hour = now.strftime("%Y-%m-%d %H:00")
+        current_day = now.strftime("%Y-%m-%d")
+        current_week = now.strftime("%Y-%W")  # 年份和周数
+        
+        # 计算当前批次的热度统计数据
+        hot_scores = [item.get('hot_score', 0) for item in news_items if 'hot_score' in item]
+        if not hot_scores:
+            return
+        
+        avg_hot_score = sum(hot_scores) / len(hot_scores)
+        max_hot_score = max(hot_scores)
+        min_hot_score = min(hot_scores)
+        
+        # 更新每小时数据
+        hourly_entry = {
+            "timestamp": current_hour,
+            "avg_score": avg_hot_score,
+            "max_score": max_hot_score,
+            "min_score": min_hot_score,
+            "news_count": len(news_items)
+        }
+        
+        # 查找是否已有当前小时的数据
+        hour_found = False
+        for i, entry in enumerate(self.trend_data["hourly"]):
+            if entry["timestamp"] == current_hour:
+                # 更新现有条目
+                self.trend_data["hourly"][i] = hourly_entry
+                hour_found = True
+                break
+        
+        if not hour_found:
+            self.trend_data["hourly"].append(hourly_entry)
+        
+        # 只保留最近24小时的数据
+        cutoff_time = (now - timedelta(hours=24)).strftime("%Y-%m-%d %H:00")
+        self.trend_data["hourly"] = [
+            entry for entry in self.trend_data["hourly"]
+            if entry["timestamp"] >= cutoff_time
+        ]
+        
+        # 更新每日数据
+        daily_entry = {
+            "date": current_day,
+            "avg_score": avg_hot_score,
+            "max_score": max_hot_score,
+            "min_score": min_hot_score,
+            "news_count": len(news_items)
+        }
+        
+        # 查找是否已有当前日的数据
+        day_found = False
+        for i, entry in enumerate(self.trend_data["daily"]):
+            if entry["date"] == current_day:
+                # 更新现有条目
+                self.trend_data["daily"][i] = daily_entry
+                day_found = True
+                break
+        
+        if not day_found:
+            self.trend_data["daily"].append(daily_entry)
+        
+        # 只保留最近7天的数据
+        cutoff_date = (now - timedelta(days=7)).strftime("%Y-%m-%d")
+        self.trend_data["daily"] = [
+            entry for entry in self.trend_data["daily"]
+            if entry["date"] >= cutoff_date
+        ]
+        
+        # 更新每周数据（每周汇总）
+        weekly_entry = {
+            "week": current_week,
+            "avg_score": avg_hot_score,
+            "max_score": max_hot_score,
+            "min_score": min_hot_score,
+            "news_count": len(news_items),
+            "last_update": current_day
+        }
+        
+        # 查找是否已有当前周的数据
+        week_found = False
+        for i, entry in enumerate(self.trend_data["weekly"]):
+            if entry["week"] == current_week:
+                # 更新现有条目（合并数据）
+                old_entry = self.trend_data["weekly"][i]
+                # 计算新的平均值
+                total_news = old_entry["news_count"] + len(news_items)
+                new_avg = (old_entry["avg_score"] * old_entry["news_count"] + avg_hot_score * len(news_items)) / total_news
+                new_max = max(old_entry["max_score"], max_hot_score)
+                new_min = min(old_entry["min_score"], min_hot_score)
+                
+                self.trend_data["weekly"][i] = {
+                    "week": current_week,
+                    "avg_score": new_avg,
+                    "max_score": new_max,
+                    "min_score": new_min,
+                    "news_count": total_news,
+                    "last_update": current_day
+                }
+                week_found = True
+                break
+        
+        if not week_found:
+            self.trend_data["weekly"].append(weekly_entry)
+        
+        # 只保留最近4周的数据
+        self.trend_data["weekly"] = self.trend_data["weekly"][-4:]
+        
+        # 更新统计数据
+        self.trend_data["statistics"] = {
+            "total_news": self.trend_data["statistics"]["total_news"] + len(news_items),
+            "avg_hot_score": avg_hot_score,
+            "max_hot_score": max_hot_score,
+            "min_hot_score": min_hot_score,
+            "last_update": now.strftime("%Y-%m-%d %H:%M:%S")
+        }
+        
+        self.trend_data["last_update"] = now.strftime("%Y-%m-%d %H:%M:%S")
+        
+        # 保存数据
+        self._save_trend_data()
+    
+    def get_hourly_trend(self, hours: int = 24) -> Dict[str, Any]:
+        """获取每小时热度趋势"""
+        if not self.trend_data["hourly"]:
+            return self._generate_sample_hourly_data()
+        
+        # 获取最近N小时的数据
+        recent_hours = self.trend_data["hourly"][-hours:]
+        
+        # 按时间排序
+        recent_hours.sort(key=lambda x: x["timestamp"])
+        
+        return {
+            "success": True,
+            "type": "hourly",
+            "hours": hours,
+            "data": recent_hours,
+            "labels": [entry["timestamp"][-5:] for entry in recent_hours],  # 只显示HH:MM
+            "avg_scores": [entry["avg_score"] for entry in recent_hours],
+            "max_scores": [entry["max_score"] for entry in recent_hours],
+            "min_scores": [entry["min_score"] for entry in recent_hours],
+            "news_counts": [entry["news_count"] for entry in recent_hours]
+        }
+    
+    def get_daily_trend(self, days: int = 7) -> Dict[str, Any]:
+        """获取每日热度趋势"""
+        if not self.trend_data["daily"]:
+            return self._generate_sample_daily_data()
+        
+        # 获取最近N天的数据
+        recent_days = self.trend_data["daily"][-days:]
+        
+        # 按时间排序
+        recent_days.sort(key=lambda x: x["date"])
+        
+        return {
+            "success": True,
+            "type": "daily",
+            "days": days,
+            "data": recent_days,
+            "labels": [entry["date"][5:] for entry in recent_days],  # 只显示MM-DD
+            "avg_scores": [entry["avg_score"] for entry in recent_days],
+            "max_scores": [entry["max_score"] for entry in recent_days],
+            "min_scores": [entry["min_score"] for entry in recent_days],
+            "news_counts": [entry["news_count"] for entry in recent_days]
+        }
+    
+    def get_weekly_trend(self, weeks: int = 4) -> Dict[str, Any]:
+        """获取每周热度趋势"""
+        if not self.trend_data["weekly"]:
+            return self._generate_sample_weekly_data()
+        
+        # 获取最近N周的数据
+        recent_weeks = self.trend_data["weekly"][-weeks:]
+        
+        # 按时间排序
+        recent_weeks.sort(key=lambda x: x["week"])
+        
+        return {
+            "success": True,
+            "type": "weekly",
+            "weeks": weeks,
+            "data": recent_weeks,
+            "labels": [f"第{entry['week'].split('-')[1]}周" for entry in recent_weeks],
+            "avg_scores": [entry["avg_score"] for entry in recent_weeks],
+            "max_scores": [entry["max_score"] for entry in recent_weeks],
+            "min_scores": [entry["min_score"] for entry in recent_weeks],
+            "news_counts": [entry["news_count"] for entry in recent_weeks]
+        }
+    
+    def _generate_sample_hourly_data(self) -> Dict[str, Any]:
+        """生成示例每小时数据（用于测试）"""
+        now = datetime.now()
+        data = []
+        labels = []
+        avg_scores = []
+        
+        for i in range(24):
+            hour = (now - timedelta(hours=23-i)).strftime("%Y-%m-%d %H:00")
+            label = (now - timedelta(hours=23-i)).strftime("%H:00")
+            
+            # 生成模拟数据：白天热度高，晚上热度低
+            hour_num = int(label.split(":")[0])
+            if 8 <= hour_num <= 18:  # 白天工作时间
+                base_score = 600 + i * 10
+            else:  # 晚上
+                base_score = 400 + i * 5
+            
+            score_variation = (i % 5) * 20  # 一些波动
+            
+            data.append({
+                "timestamp": hour,
+                "avg_score": base_score + score_variation,
+                "max_score": base_score + score_variation + 100,
+                "min_score": base_score + score_variation - 50,
+                "news_count": 5 + (i % 3)
+            })
+            
+            labels.append(label)
+            avg_scores.append(base_score + score_variation)
+        
+        return {
+            "success": True,
+            "type": "hourly",
+            "hours": 24,
+            "data": data,
+            "labels": labels,
+            "avg_scores": avg_scores,
+            "max_scores": [d["max_score"] for d in data],
+            "min_scores": [d["min_score"] for d in data],
+            "news_counts": [d["news_count"] for d in data]
+        }
+    
+    def _generate_sample_daily_data(self) -> Dict[str, Any]:
+        """生成示例每日数据（用于测试）"""
+        now = datetime.now()
+        data = []
+        labels = []
+        avg_scores = []
+        
+        for i in range(7):
+            date = (now - timedelta(days=6-i)).strftime("%Y-%m-%d")
+            label = (now - timedelta(days=6-i)).strftime("%m-%d")
+            
+            # 生成模拟数据：周中热度高，周末热度低
+            weekday = (now - timedelta(days=6-i)).weekday()
+            if 0 <= weekday <= 4:  # 周一到周五
+                base_score = 550 + i * 15
+            else:  # 周末
+                base_score = 450 + i * 10
+            
+            score_variation = (i % 3) * 30
+            
+            data.append({
+                "date": date,
+                "avg_score": base_score + score_variation,
+                "max_score": base_score + score_variation + 120,
+                "min_score": base_score + score_variation - 80,
+                "news_count": 8 + (i % 5)
+            })
+            
+            labels.append(label)
+            avg_scores.append(base_score + score_variation)
+        
+        return {
+            "success": True,
+            "type": "daily",
+            "days": 7,
+            "data": data,
+            "labels": labels,
+            "avg_scores": avg_scores,
+            "max_scores": [d["max_score"] for d in data],
+            "min_scores": [d["min_score"] for d in data],
+            "news_counts": [d["news_count"] for d in data]
+        }
+    
+    def _generate_sample_weekly_data(self) -> Dict[str, Any]:
+        """生成示例每周数据（用于测试）"""
+        now = datetime.now()
+        data = []
+        labels = []
+        avg_scores = []
+        
+        for i in range(4):
+            week_num = (int(now.strftime("%W")) - 3 + i) % 53
+            if week_num < 0:
+                week_num += 53
+            
+            label = f"第{week_num}周"
+            
+            # 生成模拟数据
+            base_score = 500 + i * 25
+            score_variation = (i % 2) * 40
+            
+            data.append({
+                "week": f"{now.year}-{week_num:02d}",
+                "avg_score": base_score + score_variation,
+                "max_score": base_score + score_variation + 150,
+                "min_score": base_score + score_variation - 100,
+                "news_count": 35 + i * 5,
+                "last_update": (now - timedelta(weeks=3-i)).strftime("%Y-%m-%d")
+            })
+            
+            labels.append(label)
+            avg_scores.append(base_score + score_variation)
+        
+        return {
+            "success": True,
+            "type": "weekly",
+            "weeks": 4,
+            "data": data,
+            "labels": labels,
+            "avg_scores": avg_scores,
+            "max_scores": [d["max_score"] for d in data],
+            "min_scores": [d["min_score"] for d in data],
+            "news_counts": [d["news_count"] for d in data]
+        }
+    
+    def get_trend_statistics(self) -> Dict[str, Any]:
+        """获取趋势统计信息"""
+        return {
+            "success": True,
+            "statistics": self.trend_data["statistics"],
+            "last_update": self.trend_data.get("last_update", "从未更新"),
+            "hourly_count": len(self.trend_data["hourly"]),
+            "daily_count": len(self.trend_data["daily"]),
+            "weekly_count": len(self.trend_data["weekly"])
+        }
+
+
+# 全局实例
+_analyzer_instance = None
+
+def get_trend_analyzer():
+    """获取趋势分析器实例（单例模式）"""
+    global _analyzer_instance
+    if _analyzer_instance is None:
+        _analyzer_instance = TrendAnalyzer()
+    return _analyzer_instance
+
+
+def update_trend_with_news(news_data: Dict[str, Any]):
+    """使用新闻数据更新趋势"""
+    analyzer = get_trend_analyzer()
+    
+    all_news = []
+    if "domestic" in news_data:
+        all_news.extend(news_data["domestic"])
+    if "international" in news_data:
+        all_news.extend(news_data["international"])
+    
+    if all_news:
+        analyzer.update_trend_data(all_news)
+
+
+if __name__ == "__main__":
+    # 测试代码
+    analyzer = TrendAnalyzer()
+    
+    print("=" * 60)
+    print("热度趋势分析器测试")
+    print("=" * 60)
+    
+    # 测试每小时趋势
+    hourly_result = analyzer.get_hourly_trend(24)
+    print(f"\n每小时趋势 (最近{hourly_result['hours']}小时):")
+    print(f"  数据点数量: {len(hourly_result['data'])}")
+    print(f"  标签: {hourly_result['labels'][:3]}...")
+    print(f"  平均热度: {hourly_result['avg_scores'][:3]}...")
+    
+    # 测试每日趋势
+    daily_result = analyzer.get_daily_trend(7)
+    print(f"\n每日趋势 (最近{daily_result['days']}天):")
+    print(f"  数据点数量: {len(daily_result['data'])}")
+    print(f"  标签: {daily_result['labels']}")
+    print(f"  平均热度: {[round(score, 1) for score in daily_result['avg_scores']]}")
+    
+    # 测试每周趋势
+    weekly_result = analyzer.get_weekly_trend(4)
+    print(f"\n每周趋势 (最近{weekly_result['weeks']}周):")
+    print(f"  数据点数量: {len(weekly_result['data'])}")
+    print(f"  标签: {weekly_result['labels']}")
+    print(f"  平均热度: {[round(score, 1) for score in weekly_result['avg_scores']]}")
+    
+    # 测试统计信息
+    stats_result = analyzer.get_trend_statistics()
+    print(f"\n统计信息:")
+    print(f"  最后更新: {stats_result['last_update']}")
+    print(f"  总新闻数: {stats_result['statistics']['total_news']}")
+    print(f"  平均热度: {stats_result['statistics']['avg_hot_score']:.1f}")
+    print(f"  最高热度: {stats_result['statistics']['max_hot_score']}")
+    print(f"  最低热度: {stats_result['statistics']['min_hot_score']}")
+    
+    print("\n" + "=" * 60)
+    print("测试完成")
+    print("=" * 60)
