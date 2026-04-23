@@ -999,14 +999,31 @@
         regionChartLoading.textContent = '正在加载图表数据...';
         regionChartLoading.style.display = 'block';
         const limit = parseInt(regionChartLimit.value);
-        const response = await fetch(`/api/region/distribution?type=country&limit=${limit}`);
-        if (!response.ok) throw new Error('数据加载失败');
-        const data = await response.json();
-        if (!data.success) throw new Error(data.error || '数据加载失败');
-        regionData = data;
+        
+        // 同时加载分布数据和统计数据
+        const [distResponse, statsResponse] = await Promise.all([
+          fetch(`/api/region/distribution?type=country&limit=${limit}`),
+          fetch('/api/region/statistics')
+        ]);
+        
+        if (!distResponse.ok) throw new Error('分布数据加载失败');
+        if (!statsResponse.ok) throw new Error('统计数据加载失败');
+        
+        const distData = await distResponse.json();
+        const statsData = await statsResponse.json();
+        
+        if (!distData.success) throw new Error(distData.error || '分布数据加载失败');
+        if (!statsData.success) throw new Error(statsData.error || '统计数据加载失败');
+        
+        // 合并数据
+        regionData = {
+          ...distData,
+          statistics: statsData.statistics
+        };
+        
         updateStatistics();
         renderRegionChart();
-        regionDataInfo.textContent = `数据加载成功 (${data.countries ? data.countries.length : 0}项)`;
+        regionDataInfo.textContent = `数据加载成功 (${distData.countries ? distData.countries.length : 0}项)`;
         regionUpdateTime.textContent = `更新时间: ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`;
       } catch (error) {
         console.error('加载地区数据失败:', error);
@@ -1092,23 +1109,37 @@
       }
     }
 
-    function selectChartItem(name, count) {
+    async function selectChartItem(name, count) {
       selectedItemName = name;
       selectedLabel.textContent = `国家: ${name} (${count}篇新闻)`;
-      selectedNewsList.innerHTML = '';
-      if (regionData && regionData.news_by_country && regionData.news_by_country[name]) {
-        const news = regionData.news_by_country[name];
-        selectedNewsList.innerHTML = news.map(item => `
-          <div class="news-item">
-            <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
-            <div class="news-meta">
-              <span>来源：${item.source || '未知'}</span>
-              <span>发布时间：${item.published || '未知'}</span>
+      selectedNewsList.innerHTML = '<div class="news-item">正在加载新闻...</div>';
+      
+      try {
+        const response = await fetch(`/api/region/news/by-country?country=${encodeURIComponent(name)}&limit=10`);
+        if (!response.ok) throw new Error('新闻数据加载失败');
+        const result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.error || '新闻数据加载失败');
+        }
+        
+        selectedNewsList.innerHTML = '';
+        if (result.news && result.news.length > 0) {
+          selectedNewsList.innerHTML = result.news.map(item => `
+            <div class="news-item">
+              <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+              <div class="news-meta">
+                <span>来源：${item.source || '未知'}</span>
+                <span>发布时间：${item.published || '未知'}</span>
+              </div>
             </div>
-          </div>
-        `).join('');
-      } else {
-        selectedNewsList.innerHTML = '<div class="news-item">暂无相关新闻</div>';
+          `).join('');
+        } else {
+          selectedNewsList.innerHTML = '<div class="news-item">暂无相关新闻</div>';
+        }
+      } catch (error) {
+        console.error('加载国家新闻失败:', error);
+        selectedNewsList.innerHTML = '<div class="news-item">新闻加载失败: ' + error.message + '</div>';
       }
     }
 
