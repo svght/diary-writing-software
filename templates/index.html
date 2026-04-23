@@ -3,30 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>智能日记本 · 浏览器版</title>
+  <title>智能新闻工作台</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <header class="site-header">
     <div class="site-brand">
-      <span class="brand-mark">✨</span>
+      <span class="brand-mark">📰</span>
       <div>
-        <p class="brand-subtitle">智能日记本</p>
-        <h1>浏览器版日记界面</h1>
+        <p class="brand-subtitle">智能新闻工作台</p>
+        <h1>新闻采集 · 评论生成 · 智能改写</h1>
       </div>
     </div>
-    <a class="button button-primary" href="#editor">开始写日记</a>
   </header>
 
   <main class="page-shell">
     <section class="hero-panel">
       <div class="hero-copy">
-        <p class="eyebrow">本地浏览器界面</p>
-        <h2>微软官网风格，清爽模块化日记体验</h2>
-        <p>在浏览器中打开，无需桌面窗口。实时获取城市天气，快速保存并下载日记。</p>
+        <p class="eyebrow">一站式新闻处理平台</p>
+        <h2>采集热点新闻，生成多样评论，自由改写风格</h2>
+        <p>实时获取国内外热点新闻，利用 DeepSeek AI 生成8种不同类型评论，并可对新闻进行8种风格的专业改写。</p>
         <div class="hero-actions">
-          <button id="refreshWeather" class="button button-secondary">刷新天气</button>
           <button id="refreshNews" class="button button-secondary">刷新新闻</button>
         </div>
       </div>
@@ -124,85 +122,36 @@
       </article>
     </section>
 
+    <!-- 多类型评论生成（强化） -->
     <section class="visualization-grid">
       <article class="visualization-card">
         <div class="card-header">
-          <span>新闻地区分布分析</span>
-          <span class="card-header-hint">第四阶段优化·迭代5</span>
+          <span>🤖 AI 多类型评论生成</span>
+          <span class="card-header-hint">8种评论类型</span>
         </div>
         
         <div class="visualization-controls">
           <div class="vis-control-row">
-            <select id="regionChartType" class="control-input" style="display: none;">
-              <option value="country">国家分布条形图</option>
-            </select>
-            <select id="regionChartLimit" class="control-input">
-              <option value="10">显示前10项</option>
-              <option value="15" selected>显示前15项</option>
-              <option value="20">显示前20项</option>
-              <option value="30">显示前30项</option>
-            </select>
-            <button id="refreshRegionData" class="button button-secondary">刷新数据</button>
-          </div>
-          <div class="vis-control-row">
-            <span class="vis-info" id="regionDataInfo">正在加载数据...</span>
-            <span class="vis-info" id="regionUpdateTime"></span>
-          </div>
-        </div>
-        
-        <div class="chart-container">
-          <div id="regionChartLoading">正在加载图表数据...</div>
-          <canvas id="regionChart"></canvas>
-        </div>
-        
-        <div class="region-statistics">
-          <div class="stat-item">
-            <span class="stat-label">总新闻数</span>
-            <span class="stat-value" id="statTotalNews">--</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">涉及国家</span>
-            <span class="stat-value" id="statTotalCountries">--</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">涉及地区</span>
-            <span class="stat-value" id="statTotalRegions">--</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">最常出现的国家（或省）</span>
-            <span class="stat-value" id="statMostFrequentCountry">--</span>
-          </div>
-        </div>
-        
-        <div class="chart-interaction">
-          <div class="interaction-hint">💡 点击图表中的条形/扇形可查看该国家/地区的详细新闻</div>
-          <div class="selected-info">
-            <span id="selectedLabel">未选择</span>
-            <div class="selected-news-list" id="selectedNewsList"></div>
-          </div>
-        </div>
-      </article>
-    </section>
-
-    <section class="visualization-grid">
-      <article class="visualization-card">
-        <div class="card-header">
-          <span>DeepSeek新闻评论生成</span>
-          <span class="card-header-hint">第四阶段优化·迭代6</span>
-        </div>
-        
-        <div class="visualization-controls">
-          <div class="vis-control-row">
-            <select id="commentNewsSelect" class="control-input">
+            <select id="commentNewsSelect" class="control-input" style="flex:1;">
               <option value="">选择新闻...</option>
             </select>
-            <button id="generateCommentBtn" class="button button-primary">生成评论</button>
+            <select id="commentTypeSelect" class="control-input" style="width:160px;">
+              <option value="insightful">深度分析型</option>
+              <option value="critical">批判质疑型</option>
+              <option value="supportive">支持赞同型</option>
+              <option value="humorous">幽默调侃型</option>
+              <option value="professional">专业分析型</option>
+              <option value="emotional">情感共鸣型</option>
+              <option value="short">短评快评型</option>
+              <option value="balanced">中立平衡型</option>
+            </select>
+            <button id="generateCommentBtn" class="button button-primary">生成</button>
             <button id="generateBatchBtn" class="button button-secondary">批量生成</button>
           </div>
           <div class="vis-control-row">
             <div class="checkbox-row">
               <input type="checkbox" id="selectAllNews" class="checkbox">
-              <label for="selectAllNews">全选当前新闻列表</label>
+              <label for="selectAllNews">全选</label>
             </div>
             <span class="vis-info" id="commentStatus">准备就绪</span>
             <span class="vis-info" id="commentUsageInfo"></span>
@@ -241,64 +190,133 @@
       </article>
     </section>
 
-    <section class="layout-grid">
-      <aside class="sidebar-card">
-        <div class="card-header">说明</div>
-        <p>选择城市后，系统会自动加载天气信息。填写标题与正文后，点击保存即可生成本地文件。</p>
-        <ul>
-          <li>本地运行，不依赖桌面窗口</li>
-          <li>保存文件后可直接下载</li>
-          <li>可自定义保存目录，页面会显示完整保存地址</li>
-        </ul>
-      </aside>
-
-      <article class="editor-card" id="editor">
-        <div class="card-header">写日记</div>
-        <form id="diaryForm">
-          <label for="noteTitle">日记标题</label>
-          <input id="noteTitle" class="control-input" type="text" placeholder="今天写了什么？" value="今日日记">
-
-          <label for="noteContent">内容</label>
-          <textarea id="noteContent" rows="12" placeholder="在此输入日记内容..."></textarea>
-
-          <label for="imageFiles">插入图片</label>
-          <input id="imageFiles" class="control-input" type="file" accept="image/*" multiple>
-          <div class="media-list" id="imageList"></div>
-
-          <label for="videoFiles">插入视频</label>
-          <input id="videoFiles" class="control-input" type="file" accept="video/*" multiple>
-          <div class="media-list" id="videoList"></div>
-
-          <div class="form-row">
-            <div class="info-box">
-              <label for="saveDirInput"><strong>自定义保存地址</strong></label>
-              <input id="saveDirInput" class="control-input" type="text" placeholder="saved_diaries/custom_folder">
-              <small class="hint">填写后会使用该路径保存，路径应相对于项目根目录。</small>
-            </div>
+    <!-- 新闻改写（新增） -->
+    <section class="visualization-grid">
+      <article class="visualization-card">
+        <div class="card-header">
+          <span>✏️ AI 新闻改写编辑</span>
+          <span class="card-header-hint">8种改写风格</span>
+        </div>
+        
+        <div class="visualization-controls">
+          <div class="vis-control-row">
+            <select id="rewriteNewsSelect" class="control-input" style="flex:1;">
+              <option value="">选择新闻...</option>
+            </select>
+            <select id="rewriteStyleSelect" class="control-input" style="width:160px;">
+              <option value="formal">正式官方</option>
+              <option value="casual">轻松口语</option>
+              <option value="concise">简洁精炼</option>
+              <option value="detailed">详细深入</option>
+              <option value="headline">标题党风格</option>
+              <option value="storytelling">故事叙述</option>
+              <option value="analytical">分析评论</option>
+              <option value="summary">摘要简报</option>
+            </select>
+            <button id="rewriteBtn" class="button button-primary">改写</button>
           </div>
-          <div class="form-row">
-            <div class="info-box full-path-box">
-              <strong>完整保存地址</strong>
-              <span id="saveDirLabel"></span>
-            </div>
+          <div class="vis-control-row">
+            <label style="font-size:13px;color:#6b7280;">或手动输入要改写的新闻：</label>
           </div>
-
-          <div class="action-row">
-            <button type="submit" class="button button-primary">保存日记</button>
-            <span class="hint" id="saveMessage"></span>
+          <div class="vis-control-row" style="flex-direction:column;gap:8px;">
+            <input type="text" id="rewriteManualTitle" class="control-input" placeholder="输入新闻标题..." style="width:100%;">
+            <textarea id="rewriteManualContent" class="control-input" rows="4" placeholder="输入新闻内容..." style="width:100%;resize:vertical;"></textarea>
           </div>
+          <div class="vis-control-row">
+            <span class="vis-info" id="rewriteStatus">准备就绪</span>
+          </div>
+        </div>
+        
+        <div class="comment-results-container">
+          <div class="loading-overlay" id="rewriteLoading">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">正在改写新闻...</div>
+          </div>
+          
+          <div class="rewrite-results" id="rewriteResults">
+            <div class="no-results">尚未生成改写结果</div>
+          </div>
+        </div>
+        
+        <div class="chart-interaction" id="rewriteActions" style="display:none;">
+          <div class="interaction-hint">✅ 改写完成！你可以：</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button id="copyRewriteBtn" class="button button-secondary">📋 复制改写结果</button>
+            <button id="saveRewriteBtn" class="button button-primary">💾 保存到本地</button>
+            <button id="resetRewriteBtn" class="button button-secondary">🔄 重新改写</button>
+          </div>
+          <div style="margin-top:12px;">
+            <span class="vis-info" id="rewriteSaveInfo"></span>
+          </div>
+        </div>
+      </article>
+    </section>
 
-          <div class="download-links" id="downloadLinks"></div>
-        </form>
+    <!-- 地区分布可视化 -->
+    <section class="visualization-grid">
+      <article class="visualization-card">
+        <div class="card-header">
+          <span>新闻地区分布分析</span>
+          <span class="card-header-hint">数据分析</span>
+        </div>
+        
+        <div class="visualization-controls">
+          <div class="vis-control-row">
+            <select id="regionChartLimit" class="control-input">
+              <option value="10">显示前10项</option>
+              <option value="15" selected>显示前15项</option>
+              <option value="20">显示前20项</option>
+              <option value="30">显示前30项</option>
+            </select>
+            <button id="refreshRegionData" class="button button-secondary">刷新数据</button>
+          </div>
+          <div class="vis-control-row">
+            <span class="vis-info" id="regionDataInfo">正在加载数据...</span>
+            <span class="vis-info" id="regionUpdateTime"></span>
+          </div>
+        </div>
+        
+        <div class="chart-container">
+          <div id="regionChartLoading">正在加载图表数据...</div>
+          <canvas id="regionChart"></canvas>
+        </div>
+        
+        <div class="region-statistics">
+          <div class="stat-item">
+            <span class="stat-label">总新闻数</span>
+            <span class="stat-value" id="statTotalNews">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">涉及国家</span>
+            <span class="stat-value" id="statTotalCountries">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">涉及地区</span>
+            <span class="stat-value" id="statTotalRegions">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">最常出现的国家</span>
+            <span class="stat-value" id="statMostFrequentCountry">--</span>
+          </div>
+        </div>
+        
+        <div class="chart-interaction">
+          <div class="interaction-hint">💡 点击图表中的条形可查看该国家的详细新闻</div>
+          <div class="selected-info">
+            <span id="selectedLabel">未选择</span>
+            <div class="selected-news-list" id="selectedNewsList"></div>
+          </div>
+        </div>
       </article>
     </section>
   </main>
 
   <footer class="site-footer">
-    <p>本地运行 · 浏览器访问 · 微软官网式界面</p>
+    <p>智能新闻工作台 · 本地运行 · AI驱动</p>
   </footer>
 
   <script>
+    // ==================== 基本元素引用 ====================
     const citySelect = document.getElementById('citySelect');
     const weatherCity = document.getElementById('weatherCity');
     const weatherCondition = document.getElementById('weatherCondition');
@@ -309,28 +327,13 @@
     const refreshNews = document.getElementById('refreshNews');
     const refreshNewsHeader = document.getElementById('refreshNewsHeader');
     const refreshNewsHeader2 = document.getElementById('refreshNewsHeader2');
-    const diaryForm = document.getElementById('diaryForm');
-    const noteTitle = document.getElementById('noteTitle');
-    const noteContent = document.getElementById('noteContent');
-    const imageFilesInput = document.getElementById('imageFiles');
-    const videoFilesInput = document.getElementById('videoFiles');
-    const imageList = document.getElementById('imageList');
-    const videoList = document.getElementById('videoList');
-    const saveMessage = document.getElementById('saveMessage');
-    const downloadLinks = document.getElementById('downloadLinks');
-    const saveDirInput = document.getElementById('saveDirInput');
-    const saveDirLabel = document.getElementById('saveDirLabel');
     const domesticTabs = document.getElementById('domesticTabs');
-    const baseDir = String.raw`{{ base_dir }}`;
-    const defaultSaveDir = String.raw`{{ default_save_dir }}`;
     const newsSearch = document.getElementById('newsSearch');
     const regionFilter = document.getElementById('regionFilter');
     const domesticNewsSearch = document.getElementById('domesticNewsSearch');
     const domesticRegionFilter = document.getElementById('domesticRegionFilter');
 
     let currentWeather = null;
-    let selectedImages = [];
-    let selectedVideos = [];
     let allInternationalNews = [];
     let allDomesticNews = [];
 
@@ -349,9 +352,7 @@
     async function fetchCityFromCoordinates(latitude, longitude) {
       try {
         const response = await fetch(`/api/geocode?lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}`);
-        if (!response.ok) {
-          return null;
-        }
+        if (!response.ok) return null;
         const data = await response.json();
         return data.success ? data.city : null;
       } catch (error) {
@@ -360,10 +361,7 @@
     }
 
     async function setInitialCityFromSystemLocation() {
-      if (!navigator.geolocation) {
-        return false;
-      }
-
+      if (!navigator.geolocation) return false;
       return new Promise((resolve) => {
         navigator.geolocation.getCurrentPosition(async (position) => {
           const city = await fetchCityFromCoordinates(position.coords.latitude, position.coords.longitude);
@@ -374,75 +372,21 @@
           } else {
             resolve(false);
           }
-        }, () => {
-          resolve(false);
-        }, { timeout: 10000 });
+        }, () => { resolve(false); }, { timeout: 10000 });
       });
-    }
-
-    function renderMediaList() {
-      imageList.innerHTML = selectedImages.map(item => `<div class="media-item">📷 ${item}</div>`).join('');
-      videoList.innerHTML = selectedVideos.map(item => `<div class="media-item">🎬 ${item}</div>`).join('');
-    }
-
-    function getSaveDirectoryValue() {
-      return saveDirInput.value.trim() || defaultSaveDir;
-    }
-
-    function updateSaveDirectoryLabel() {
-      const selectedDir = getSaveDirectoryValue();
-      const normalizedBase = baseDir.replace(/\\/g, '/');
-      saveDirLabel.textContent = `${normalizedBase}/${selectedDir}`;
-    }
-
-    async function uploadMedia(files, mediaType) {
-      if (!files.length) {
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('type', mediaType);
-      for (const file of files) {
-        formData.append('files', file);
-      }
-
-      try {
-        const response = await fetch('/api/upload_media', {
-          method: 'POST',
-          body: formData,
-        });
-        const data = await response.json();
-        if (!data.success) {
-          throw new Error(data.error || '上传失败');
-        }
-
-        if (mediaType === 'image') {
-          selectedImages = selectedImages.concat(data.items);
-        } else {
-          selectedVideos = selectedVideos.concat(data.items);
-        }
-
-        renderMediaList();
-        saveMessage.textContent = '媒体文件上传成功';
-      } catch (error) {
-        saveMessage.textContent = error.message;
-      }
     }
 
     async function loadWeather(city) {
       try {
         const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
         const data = await response.json();
-        if (!data.success) {
-          throw new Error(data.error || '天气加载失败');
-        }
+        if (!data.success) throw new Error(data.error || '天气加载失败');
         currentWeather = data.weather;
         weatherCity.textContent = data.weather.city || city;
         weatherCondition.textContent = data.weather.condition || '未知';
         weatherTemperature.textContent = `${data.weather.temperature_c || '--'}°C`;
         weatherSummary.textContent = `体感 ${data.weather.feelslike_c || '--'}°C · 湿度 ${data.weather.humidity || '--'}%`;
         weatherDetails.textContent = `风速 ${data.weather.wind_kph || '--'} km/h · 能见度 ${data.weather.visibility_km || '--'} km`;
-        saveMessage.textContent = '';
       } catch (error) {
         weatherCondition.textContent = '加载失败';
         weatherSummary.textContent = error.message;
@@ -451,6 +395,7 @@
       }
     }
 
+    // ==================== 新闻加载与显示 ====================
     async function loadNews() {
       domesticNewsLoading.textContent = '正在加载国内新闻...';
       internationalNewsLoading.textContent = '正在加载国际新闻...';
@@ -459,13 +404,9 @@
       try {
         const response = await fetch('/api/news');
         const data = await response.json();
-        if (!data.success) {
-          throw new Error('新闻加载失败');
-        }
-        // 保存所有国内新闻和国际新闻用于过滤
+        if (!data.success) throw new Error('新闻加载失败');
         allDomesticNews = data.domestic || [];
         allInternationalNews = data.international || [];
-        // 显示所有新闻（初始状态）
         applyDomesticFilters();
         applyNewsFilters();
       } catch (error) {
@@ -480,10 +421,7 @@
         domesticNews.innerHTML = '';
         return;
       }
-
       let filtered = [...allDomesticNews];
-
-      // 搜索过滤
       const searchTerm = domesticNewsSearch.value.toLowerCase().trim();
       if (searchTerm) {
         filtered = filtered.filter(item => 
@@ -491,41 +429,25 @@
           (item.source && item.source.toLowerCase().includes(searchTerm))
         );
       }
-
-      // 地区过滤
       const selectedRegion = domesticRegionFilter.value;
       if (selectedRegion) {
         filtered = filtered.filter(item => item.region === selectedRegion);
       }
-
-      // 按热度排序（热度分数高的在前）
-      filtered.sort((a, b) => {
-        const scoreA = a.hot_score || 0;
-        const scoreB = b.hot_score || 0;
-        return scoreB - scoreA;
-      });
-
-      // 渲染过滤后的新闻（使用现有分组逻辑）
+      filtered.sort((a, b) => (b.hot_score || 0) - (a.hot_score || 0));
       if (filtered.length === 0) {
         domesticNewsLoading.textContent = '没有匹配的新闻。';
         domesticNews.innerHTML = '';
         domesticTabs.innerHTML = '';
       } else {
-        // 使用分组逻辑渲染过滤后的新闻
         const grouped = {};
         filtered.forEach(item => {
-          let category = '头条'; // Default to Toutiao
-          if (item.source && (item.source.includes('新浪') || item.source.includes('焦点'))) {
-            category = '微博';
-          }
+          let category = '头条';
+          if (item.source && (item.source.includes('新浪') || item.source.includes('焦点'))) category = '微博';
           if (!grouped[category]) grouped[category] = [];
           grouped[category].push(item);
         });
-        
         const sources = Object.keys(grouped);
-        // 更新标签页
         domesticTabs.innerHTML = sources.map(source => `<button class="news-tab" data-source="${source}">${source}</button>`).join('');
-        // 添加点击事件
         domesticTabs.querySelectorAll('.news-tab').forEach(tab => {
           tab.addEventListener('click', () => {
             domesticTabs.querySelectorAll('.news-tab').forEach(t => t.classList.remove('active'));
@@ -533,7 +455,6 @@
             renderNewsList(domesticNews, grouped[tab.dataset.source], domesticNewsLoading);
           });
         });
-        // 默认显示第一个标签页
         if (sources.length > 0) {
           domesticTabs.querySelector('.news-tab').classList.add('active');
           renderNewsList(domesticNews, grouped[sources[0]], domesticNewsLoading);
@@ -550,10 +471,7 @@
         internationalNews.innerHTML = '';
         return;
       }
-
       let filtered = [...allInternationalNews];
-
-      // 搜索过滤
       const searchTerm = newsSearch.value.toLowerCase().trim();
       if (searchTerm) {
         filtered = filtered.filter(item => 
@@ -562,21 +480,11 @@
           (item.region && item.region.toLowerCase().includes(searchTerm))
         );
       }
-
-      // 地区过滤
       const selectedRegion = regionFilter.value;
       if (selectedRegion) {
         filtered = filtered.filter(item => item.region === selectedRegion);
       }
-
-      // 按热度排序（热度分数高的在前）
-      filtered.sort((a, b) => {
-        const scoreA = a.hot_score || 0;
-        const scoreB = b.hot_score || 0;
-        return scoreB - scoreA;
-      });
-
-      // 渲染过滤后的新闻
+      filtered.sort((a, b) => (b.hot_score || 0) - (a.hot_score || 0));
       if (filtered.length === 0) {
         internationalNewsLoading.textContent = '没有匹配的新闻。';
         internationalNews.innerHTML = '';
@@ -584,6 +492,7 @@
         internationalNewsLoading.textContent = '';
         internationalNews.innerHTML = filtered.map(item => `
           <li class="news-item">
+            <input type="checkbox" class="news-checkbox" data-title="${item.title.replace(/"/g, '"')}" data-content="${(item.content || item.description || '').replace(/"/g, '"')}" data-id="${item.link || item.title}">
             <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
             <div class="news-meta">
               <span>来源：${item.source || '未知'}</span>
@@ -601,6 +510,7 @@
       loadingElement.textContent = '';
       container.innerHTML = list.map(item => `
         <li class="news-item">
+          <input type="checkbox" class="news-checkbox" data-title="${item.title.replace(/"/g, '"')}" data-content="${(item.content || item.description || '').replace(/"/g, '"')}" data-id="${item.link || item.title}">
           <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
           <div class="news-meta">
             <span>来源：${item.source || '未知'}</span>
@@ -613,404 +523,25 @@
       `).join('');
     }
 
-    function renderDomesticNews(list) {
-      if (!list || !list.length) {
-        domesticNewsLoading.textContent = '未能获取到新闻内容。';
-        domesticTabs.innerHTML = '';
-        domesticNews.innerHTML = '';
-        return;
-      }
-      // Group by source, but merge Toutiao sources into "头条", Sina into "微博"
-      const grouped = {};
-      list.forEach(item => {
-        let category = '头条'; // Default to Toutiao
-        if (item.source && (item.source.includes('新浪') || item.source.includes('焦点'))) {
-          category = '微博';
-        }
-        if (!grouped[category]) grouped[category] = [];
-        grouped[category].push(item);
-      });
-      const sources = Object.keys(grouped);
-      // Create tabs
-      domesticTabs.innerHTML = sources.map(source => `<button class="news-tab" data-source="${source}">${source}</button>`).join('');
-      // Add click events
-      domesticTabs.querySelectorAll('.news-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          // Remove active class
-          domesticTabs.querySelectorAll('.news-tab').forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          // Render news for this source
-          renderNewsList(domesticNews, grouped[tab.dataset.source], domesticNewsLoading);
-        });
-      });
-      // Default to first tab
-      if (sources.length > 0) {
-        domesticTabs.querySelector('.news-tab').classList.add('active');
-        renderNewsList(domesticNews, grouped[sources[0]], domesticNewsLoading);
-      }
-    }
-
-    citySelect.addEventListener('change', () => {
-      saveMessage.textContent = '正在加载天气...';
-      loadWeather(citySelect.value);
-    });
-
-    saveDirInput.addEventListener('input', updateSaveDirectoryLabel);
-
-    imageFilesInput.addEventListener('change', () => {
-      uploadMedia(imageFilesInput.files, 'image');
-      imageFilesInput.value = '';
-    });
-
-    videoFilesInput.addEventListener('change', () => {
-      uploadMedia(videoFilesInput.files, 'video');
-      videoFilesInput.value = '';
-    });
-
-    // 地区分布可视化功能
-    const regionChartType = document.getElementById('regionChartType');
-    const regionChartLimit = document.getElementById('regionChartLimit');
-    const refreshRegionData = document.getElementById('refreshRegionData');
-    const regionDataInfo = document.getElementById('regionDataInfo');
-    const regionUpdateTime = document.getElementById('regionUpdateTime');
-    const regionChartLoading = document.getElementById('regionChartLoading');
-    const regionChartCanvas = document.getElementById('regionChart');
-    const selectedLabel = document.getElementById('selectedLabel');
-    const selectedNewsList = document.getElementById('selectedNewsList');
-    const statTotalNews = document.getElementById('statTotalNews');
-    const statTotalCountries = document.getElementById('statTotalCountries');
-    const statTotalRegions = document.getElementById('statTotalRegions');
-    const statMostFrequentCountry = document.getElementById('statMostFrequentCountry');
-
-    let regionChart = null;
-    let regionData = null;
-    let selectedItemName = null;
-
-    async function loadRegionData() {
-      try {
-        regionDataInfo.textContent = '正在加载地区分布数据...';
-        regionChartLoading.textContent = '正在加载图表数据...';
-        regionChartLoading.style.display = 'block';
-        
-        const type = regionChartType.value;
-        const limit = parseInt(regionChartLimit.value);
-        const response = await fetch(`/api/region/distribution?type=${type}&limit=${limit}`);
-        
-        if (!response.ok) {
-          throw new Error('数据加载失败');
-        }
-        
-        const data = await response.json();
-        if (!data.success) {
-          throw new Error(data.error || '数据加载失败');
-        }
-        
-        regionData = data;
-        updateStatistics();
-        renderRegionChart();
-        regionDataInfo.textContent = `数据加载成功 (${data.countries ? data.countries.length : data.regions ? data.regions.length : 0}项)`;
-        regionUpdateTime.textContent = `更新时间: ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`;
-        
-      } catch (error) {
-        console.error('加载地区数据失败:', error);
-        regionDataInfo.textContent = '数据加载失败: ' + error.message;
-        regionChartLoading.textContent = '图表数据加载失败';
-        regionUpdateTime.textContent = '';
-      }
-    }
-
-    function updateStatistics() {
-      if (!regionData) return;
-      
-      if (regionData.statistics) {
-        statTotalNews.textContent = regionData.statistics.total_news || '--';
-        statTotalCountries.textContent = regionData.statistics.total_countries || '--';
-        statTotalRegions.textContent = regionData.statistics.total_regions || '--';
-        
-        if (regionData.statistics.most_frequent_country) {
-          statMostFrequentCountry.textContent = `${regionData.statistics.most_frequent_country.name} (${regionData.statistics.most_frequent_country.count}次)`;
-        } else {
-          statMostFrequentCountry.textContent = '--';
-        }
-      }
-    }
-
-    function renderRegionChart() {
-      if (!regionData) return;
-      
-      regionChartLoading.style.display = 'none';
-      
-      const ctx = regionChartCanvas.getContext('2d');
-      
-      // 销毁现有图表
-      if (regionChart) {
-        regionChart.destroy();
-      }
-      
-      const chartType = regionChartType.value;
-      const isCountryChart = chartType === 'country';
-      const labels = isCountryChart ? regionData.countries : regionData.regions;
-      
-      // 对于饼图，使用百分比数据；对于条形图，使用原始数量
-      let dataValues;
-      if (isCountryChart) {
-        dataValues = regionData.counts;
-      } else {
-        // 从data数组中提取百分比，确保是数字
-        if (regionData.data && Array.isArray(regionData.data)) {
-          dataValues = regionData.data.map(item => {
-            const percent = item.percentage;
-            const numValue = parseFloat(percent);
-            return isNaN(numValue) ? 0 : numValue;
-          });
-        } else {
-          dataValues = regionData.counts;
-        }
-      }
-      
-      // 确保数据数组不为空
-      if (!dataValues || dataValues.length === 0) {
-        regionChartLoading.textContent = '没有数据可显示';
-        regionChartLoading.style.display = 'block';
-        return;
-      }
-      
-      const backgroundColor = isCountryChart ? 
-        ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#84cc16'] :
-        ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-      
-      const chartData = {
-        labels: labels,
-        datasets: [{
-          label: isCountryChart ? '新闻数量' : '分布比例',
-          data: dataValues,
-          backgroundColor: backgroundColor,
-          borderColor: isCountryChart ? '#1e40af' : '#1e293b',
-          borderWidth: 1,
-          borderRadius: 4,
-          hoverBackgroundColor: isCountryChart ? '#2563eb' : '#0ea5e9',
-        }]
-      };
-      
-      const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: chartType === 'region',
-            position: 'right',
-            labels: {
-              boxWidth: 12,
-              padding: 15
-            }
-          },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                const label = context.dataset.label || '';
-                const value = context.parsed.y || context.parsed;
-                return `${label}: ${value}${chartType === 'region' ? '%' : '篇'}`;
-              }
-            }
-          }
-        },
-        scales: chartType === 'country' ? {
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: '新闻数量'
-            }
-          },
-          x: {
-            title: {
-              display: true,
-              text: '国家'
-            }
-          }
-        } : {},
-        onClick: (event, elements) => {
-          if (elements.length > 0) {
-            const index = elements[0].index;
-            const itemName = labels[index];
-            const itemCount = dataValues[index];
-            selectChartItem(itemName, itemCount, isCountryChart);
-          }
-        }
-      };
-      
-      const chartConfig = {
-        type: chartType === 'country' ? 'bar' : 'pie',
-        data: chartData,
-        options: chartOptions
-      };
-      
-      try {
-        regionChart = new Chart(ctx, chartConfig);
-      } catch (error) {
-        console.error('图表创建失败:', error);
-        regionChartLoading.textContent = '图表创建失败: ' + error.message;
-        regionChartLoading.style.display = 'block';
-      }
-    }
-
-    function selectChartItem(name, count, isCountry) {
-      selectedItemName = name;
-      selectedLabel.textContent = `${isCountry ? '国家' : '地区'}: ${name} (${count}${isCountry ? '篇新闻' : '%'})`;
-      
-      // 清空之前的新闻列表
-      selectedNewsList.innerHTML = '';
-      
-      if (regionData && regionData.news_by_country && isCountry) {
-        const countryNews = regionData.news_by_country[name] || [];
-        if (countryNews.length > 0) {
-          selectedNewsList.innerHTML = countryNews.map(news => `
-            <div class="news-item">
-              <a href="${news.link}" target="_blank" rel="noopener noreferrer">${news.title}</a>
-              <div class="news-meta">
-                <span>来源：${news.source || '未知'}</span>
-                <span>发布时间：${news.published || '未知'}</span>
-              </div>
-            </div>
-          `).join('');
-        } else {
-          selectedNewsList.innerHTML = '<div class="news-item">暂无相关新闻</div>';
-        }
-      } else if (regionData && regionData.news_by_region && !isCountry) {
-        const regionNews = regionData.news_by_region[name] || [];
-        if (regionNews.length > 0) {
-          selectedNewsList.innerHTML = regionNews.map(news => `
-            <div class="news-item">
-              <a href="${news.link}" target="_blank" rel="noopener noreferrer">${news.title}</a>
-              <div class="news-meta">
-                <span>来源：${news.source || '未知'}</span>
-                <span>发布时间：${news.published || '未知'}</span>
-              </div>
-            </div>
-          `).join('');
-        } else {
-          selectedNewsList.innerHTML = '<div class="news-item">暂无相关新闻</div>';
-        }
-      }
-    }
-
-    // 事件监听器
-    regionChartType.addEventListener('change', () => {
-      if (regionData) {
-        renderRegionChart();
-        selectedLabel.textContent = '未选择';
-        selectedNewsList.innerHTML = '';
-        selectedItemName = null;
-      }
-    });
-
-    regionChartLimit.addEventListener('change', loadRegionData);
-    refreshRegionData.addEventListener('click', loadRegionData);
-
-    // 加载统计信息
-    async function loadRegionStatistics() {
-      try {
-        const response = await fetch('/api/region/statistics');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.statistics) {
-            statTotalNews.textContent = data.statistics.total_news || '--';
-            statTotalCountries.textContent = data.statistics.total_countries || '--';
-            statTotalRegions.textContent = data.statistics.total_regions || '--';
-            
-            if (data.statistics.most_frequent_country) {
-              statMostFrequentCountry.textContent = `${data.statistics.most_frequent_country.name} (${data.statistics.most_frequent_country.count}次)`;
-            }
-          }
-        }
-      } catch (error) {
-        console.error('加载统计信息失败:', error);
-      }
-    }
-
-    refreshWeather.addEventListener('click', () => {
-      saveMessage.textContent = '正在刷新天气...';
-      loadWeather(citySelect.value);
-    });
-
-    // 搜索和过滤功能 - 国内新闻
-    domesticNewsSearch.addEventListener('input', () => {
-      applyDomesticFilters();
-    });
-
-    domesticRegionFilter.addEventListener('change', () => {
-      applyDomesticFilters();
-    });
-
-    // 搜索和过滤功能 - 国际新闻
-    newsSearch.addEventListener('input', () => {
-      applyNewsFilters();
-    });
-
-    regionFilter.addEventListener('change', () => {
-      applyNewsFilters();
-    });
+    // ==================== 事件监听 - 天气 & 新闻 ====================
+    citySelect.addEventListener('change', () => loadWeather(citySelect.value));
+    domesticNewsSearch.addEventListener('input', applyDomesticFilters);
+    domesticRegionFilter.addEventListener('change', applyDomesticFilters);
+    newsSearch.addEventListener('input', applyNewsFilters);
+    regionFilter.addEventListener('change', applyNewsFilters);
 
     const refreshNewsAction = () => {
       domesticNewsLoading.textContent = '正在刷新国内新闻...';
       internationalNewsLoading.textContent = '正在刷新国际新闻...';
       loadNews();
     };
-
     refreshNews.addEventListener('click', refreshNewsAction);
-    if (refreshNewsHeader) {
-      refreshNewsHeader.addEventListener('click', refreshNewsAction);
-    }
-    if (refreshNewsHeader2) {
-      refreshNewsHeader2.addEventListener('click', refreshNewsAction);
-    }
+    if (refreshNewsHeader) refreshNewsHeader.addEventListener('click', refreshNewsAction);
+    if (refreshNewsHeader2) refreshNewsHeader2.addEventListener('click', refreshNewsAction);
 
-    diaryForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      saveMessage.textContent = '';
-      downloadLinks.innerHTML = '';
-      const content = noteContent.value.trim();
-      const title = noteTitle.value.trim() || '今日日记';
-      const city = citySelect.value;
-      if (!content) {
-        saveMessage.textContent = '请填写日记内容。';
-        return;
-      }
-
-      const payload = {
-        title,
-        city,
-        content,
-        weather: currentWeather || { condition: '未知', temperature_c: '--', feelslike_c: '--', humidity: '--', wind_kph: '--', visibility_km: '--' },
-        images: selectedImages,
-        videos: selectedVideos,
-        save_dir: getSaveDirectoryValue(),
-      };
-
-      try {
-        const response = await fetch('/api/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        const data = await response.json();
-        if (!data.success) {
-          throw new Error(data.error || '保存失败');
-        }
-        saveMessage.textContent = '保存成功。可点击下载生成文件。';
-        const saveDir = encodeURIComponent(data.save_dir || getSaveDirectoryValue());
-        downloadLinks.innerHTML = `
-          <a href="/download/${saveDir}/${encodeURIComponent(data.json_file)}" target="_blank" class="link-button">下载 JSON</a>
-          <a href="/download/${saveDir}/${encodeURIComponent(data.txt_file)}" target="_blank" class="link-button">下载 TXT</a>
-          <a href="/download/${saveDir}/${encodeURIComponent(data.docx_file)}" target="_blank" class="link-button">下载 DOCX</a>
-        `;
-      } catch (error) {
-        saveMessage.textContent = error.message;
-      }
-    });
-
-    // DeepSeek评论生成功能
+    // ==================== AI 评论生成 ====================
     const commentNewsSelect = document.getElementById('commentNewsSelect');
+    const commentTypeSelect = document.getElementById('commentTypeSelect');
     const generateCommentBtn = document.getElementById('generateCommentBtn');
     const generateBatchBtn = document.getElementById('generateBatchBtn');
     const selectAllNews = document.getElementById('selectAllNews');
@@ -1022,16 +553,13 @@
     const statTotalRequests = document.getElementById('statTotalRequests');
     const statRemainingTokens = document.getElementById('statRemainingTokens');
     const statSuccessRate = document.getElementById('statSuccessRate');
-    
+
     let allNewsForComments = [];
     let selectedNewsForBatch = new Set();
-    
-    // 更新新闻选择下拉框
+
     function updateCommentNewsSelect() {
       commentNewsSelect.innerHTML = '<option value="">选择新闻...</option>';
       allNewsForComments = [];
-      
-      // 添加国内新闻
       if (allDomesticNews && allDomesticNews.length > 0) {
         const group = document.createElement('optgroup');
         group.label = '国内新闻';
@@ -1042,14 +570,12 @@
             content: news.content || news.description || '',
             id: news.link || `domestic_${index}`
           });
-          option.textContent = `${news.title} (${news.source || '未知来源'})`;
+          option.textContent = `${news.title.substring(0, 40)}${news.title.length > 40 ? '...' : ''} (${news.source || '未知来源'})`;
           group.appendChild(option);
           allNewsForComments.push(news);
         });
         commentNewsSelect.appendChild(group);
       }
-      
-      // 添加国际新闻
       if (allInternationalNews && allInternationalNews.length > 0) {
         const group = document.createElement('optgroup');
         group.label = '国际新闻';
@@ -1060,53 +586,50 @@
             content: news.content || news.description || '',
             id: news.link || `international_${index}`
           });
-          option.textContent = `${news.title} (${news.source || '未知来源'})`;
+          option.textContent = `${news.title.substring(0, 40)}${news.title.length > 40 ? '...' : ''} (${news.source || '未知来源'})`;
           group.appendChild(option);
           allNewsForComments.push(news);
         });
         commentNewsSelect.appendChild(group);
       }
+      // 同步到改写选择框
+      syncRewriteNewsSelect();
     }
-    
-    // 更新使用量统计
+
     async function updateCommentUsageStats() {
       try {
         const response = await fetch('/api/deepseek/usage');
         if (!response.ok) return;
-        
         const data = await response.json();
         if (data.success && data.usage_info) {
           const usage = data.usage_info;
           statTotalTokens.textContent = `${usage.total_tokens} tokens`;
           statTotalRequests.textContent = `${usage.total_requests} 次`;
           statRemainingTokens.textContent = `${usage.remaining_tokens} tokens`;
-          
           const successRate = usage.total_requests > 0 ? 
             Math.round((usage.successful_requests / usage.total_requests) * 100) : 100;
           statSuccessRate.textContent = `${successRate}%`;
-          
           commentUsageInfo.textContent = `剩余: ${usage.remaining_tokens}tokens / ${usage.remaining_requests}次请求`;
         }
       } catch (error) {
         console.error('更新使用量统计失败:', error);
       }
     }
-    
-    // 显示加载状态
+
     function showCommentLoading(show) {
       commentLoading.style.display = show ? 'flex' : 'none';
     }
-    
-    // 渲染评论结果
+
     function renderCommentResult(result, index = 0) {
       const resultDiv = document.createElement('div');
       resultDiv.className = 'comment-result';
-      
       if (result.success) {
+        const typeLabel = result.comment_type ? getCommentTypeLabel(result.comment_type) : '';
         resultDiv.innerHTML = `
           <div class="comment-header">
             <span class="comment-title">${result.news_title}</span>
             <span class="comment-meta">
+              ${typeLabel ? `📌 ${typeLabel} | ` : ''}
               ${result.cached ? '📦 缓存' : '✨ 新生成'} | 
               ${result.model} | 
               ${result.generation_time.toFixed(2)}秒
@@ -1115,7 +638,7 @@
           <div class="comment-content">
             <div class="comment-text">${result.comment}</div>
             <div class="comment-actions">
-              <button class="button button-secondary button-small copy-comment-btn" data-comment="${result.comment}">复制评论</button>
+              <button class="button button-secondary button-small copy-comment-btn" data-comment="${result.comment.replace(/"/g, '"')}">📋 复制评论</button>
               <button class="button button-secondary button-small collapse-comment-btn">折叠/展开</button>
             </div>
           </div>
@@ -1131,24 +654,15 @@
           </div>
         `;
       }
-      
       commentResults.prepend(resultDiv);
-      
-      // 添加事件监听器
       const copyBtn = resultDiv.querySelector('.copy-comment-btn');
       if (copyBtn) {
         copyBtn.addEventListener('click', () => {
           navigator.clipboard.writeText(copyBtn.dataset.comment)
-            .then(() => {
-              commentStatus.textContent = '评论已复制到剪贴板';
-              setTimeout(() => commentStatus.textContent = '准备就绪', 2000);
-            })
-            .catch(() => {
-              commentStatus.textContent = '复制失败，请手动复制';
-            });
+            .then(() => { commentStatus.textContent = '评论已复制到剪贴板'; setTimeout(() => commentStatus.textContent = '准备就绪', 2000); })
+            .catch(() => { commentStatus.textContent = '复制失败'; });
         });
       }
-      
       const collapseBtn = resultDiv.querySelector('.collapse-comment-btn');
       if (collapseBtn) {
         const commentContent = resultDiv.querySelector('.comment-content');
@@ -1163,92 +677,75 @@
         });
       }
     }
-    
-    // 清除评论结果
+
+    function getCommentTypeLabel(type) {
+      const labels = {
+        'insightful': '深度分析型', 'critical': '批判质疑型', 'supportive': '支持赞同型',
+        'humorous': '幽默调侃型', 'professional': '专业分析型', 'emotional': '情感共鸣型',
+        'short': '短评快评型', 'balanced': '中立平衡型'
+      };
+      return labels[type] || type;
+    }
+
     function clearCommentResults() {
       commentResults.innerHTML = '<div class="no-results">尚未生成评论</div>';
     }
-    
-    // 生成单条评论
+
     async function generateSingleComment() {
       const selectedOption = commentNewsSelect.value;
       if (!selectedOption) {
         commentStatus.textContent = '请先选择一条新闻';
         return;
       }
-      
       try {
         const newsData = JSON.parse(selectedOption);
         showCommentLoading(true);
         commentStatus.textContent = '正在生成评论...';
-        
         const response = await fetch('/api/news/analyze/comment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newsData)
+          body: JSON.stringify({ ...newsData, comment_type: commentTypeSelect.value })
         });
-        
         const result = await response.json();
         showCommentLoading(false);
-        
         if (result.success) {
           commentStatus.textContent = '评论生成成功';
           renderCommentResult(result);
           updateCommentUsageStats();
         } else {
           commentStatus.textContent = `生成失败: ${result.error}`;
-          renderCommentResult({
-            success: false,
-            news_title: newsData.title,
-            error: result.error
-          });
+          renderCommentResult({ success: false, news_title: newsData.title, error: result.error });
         }
       } catch (error) {
         showCommentLoading(false);
         commentStatus.textContent = `请求失败: ${error.message}`;
-        console.error('生成评论失败:', error);
       }
     }
-    
-    // 批量生成评论
+
     async function generateBatchComments() {
-      // 获取选中的新闻
       const selectedNews = getSelectedNewsForBatch();
       if (selectedNews.length === 0) {
-        commentStatus.textContent = '请先选择新闻（勾选新闻列表项）';
+        commentStatus.textContent = '请先勾选要批量生成的新闻';
         return;
       }
-      
-      if (selectedNews.length > 10) {
-        commentStatus.textContent = '批量生成最多支持10条新闻';
+      if (selectedNews.length > 20) {
+        commentStatus.textContent = '批量生成最多支持20条新闻';
         return;
       }
-      
       try {
         showCommentLoading(true);
         commentStatus.textContent = `正在批量生成 ${selectedNews.length} 条评论...`;
-        
         const response = await fetch('/api/news/analyze/comment/batch', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            news_items: selectedNews,
-            max_concurrent: 3
-          })
+          body: JSON.stringify({ news_items: selectedNews, max_concurrent: 3, comment_type: commentTypeSelect.value })
         });
-        
         const result = await response.json();
         showCommentLoading(false);
-        
         if (result.success) {
           commentStatus.textContent = `批量生成完成: ${result.successful}成功, ${result.failed}失败`;
           clearCommentResults();
-          
-          // 显示所有结果
-          result.results.forEach((commentResult, index) => {
-            renderCommentResult(commentResult, index);
-          });
-          
+          result.results.forEach((r, i) => renderCommentResult(r, i));
           updateCommentUsageStats();
         } else {
           commentStatus.textContent = `批量生成失败: ${result.error}`;
@@ -1256,141 +753,394 @@
       } catch (error) {
         showCommentLoading(false);
         commentStatus.textContent = `请求失败: ${error.message}`;
-        console.error('批量生成评论失败:', error);
       }
     }
-    
-    // 获取批量选中的新闻
+
     function getSelectedNewsForBatch() {
-      const selectedNews = [];
-      
-      // 检查国内新闻列表
-      const domesticItems = document.querySelectorAll('#domesticNews .news-item');
-      domesticItems.forEach((item, index) => {
-        const checkbox = item.querySelector('.news-checkbox');
-        if (checkbox && checkbox.checked && index < allDomesticNews.length) {
-          const news = allDomesticNews[index];
-          selectedNews.push({
+      const selected = [];
+      document.querySelectorAll('.news-checkbox:checked').forEach(cb => {
+        selected.push({
+          title: cb.dataset.title,
+          content: cb.dataset.content,
+          id: cb.dataset.id
+        });
+      });
+      return selected;
+    }
+
+    // 全选
+    selectAllNews.addEventListener('change', (e) => {
+      document.querySelectorAll('.news-checkbox').forEach(cb => { cb.checked = e.target.checked; });
+    });
+
+    generateCommentBtn.addEventListener('click', generateSingleComment);
+    generateBatchBtn.addEventListener('click', generateBatchComments);
+
+    // ==================== AI 新闻改写编辑 ====================
+    const rewriteNewsSelect = document.getElementById('rewriteNewsSelect');
+    const rewriteStyleSelect = document.getElementById('rewriteStyleSelect');
+    const rewriteBtn = document.getElementById('rewriteBtn');
+    const rewriteManualTitle = document.getElementById('rewriteManualTitle');
+    const rewriteManualContent = document.getElementById('rewriteManualContent');
+    const rewriteStatus = document.getElementById('rewriteStatus');
+    const rewriteLoading = document.getElementById('rewriteLoading');
+    const rewriteResults = document.getElementById('rewriteResults');
+    const rewriteActions = document.getElementById('rewriteActions');
+    const copyRewriteBtn = document.getElementById('copyRewriteBtn');
+    const saveRewriteBtn = document.getElementById('saveRewriteBtn');
+    const resetRewriteBtn = document.getElementById('resetRewriteBtn');
+    const rewriteSaveInfo = document.getElementById('rewriteSaveInfo');
+
+    let lastRewriteResult = null; // 保存最后一次改写结果
+
+    function syncRewriteNewsSelect() {
+      rewriteNewsSelect.innerHTML = '<option value="">选择新闻...</option>';
+      if (allDomesticNews && allDomesticNews.length > 0) {
+        const group = document.createElement('optgroup');
+        group.label = '国内新闻';
+        allDomesticNews.slice(0, 10).forEach((news, index) => {
+          const option = document.createElement('option');
+          option.value = JSON.stringify({
             title: news.title,
             content: news.content || news.description || '',
             id: news.link || `domestic_${index}`
           });
-        }
-      });
-      
-      // 检查国际新闻列表
-      const internationalItems = document.querySelectorAll('#internationalNews .news-item');
-      internationalItems.forEach((item, index) => {
-        const checkbox = item.querySelector('.news-checkbox');
-        if (checkbox && checkbox.checked && index < allInternationalNews.length) {
-          const news = allInternationalNews[index];
-          selectedNews.push({
+          option.textContent = `${news.title.substring(0, 40)}${news.title.length > 40 ? '...' : ''} (${news.source || '未知来源'})`;
+          group.appendChild(option);
+        });
+        rewriteNewsSelect.appendChild(group);
+      }
+      if (allInternationalNews && allInternationalNews.length > 0) {
+        const group = document.createElement('optgroup');
+        group.label = '国际新闻';
+        allInternationalNews.slice(0, 10).forEach((news, index) => {
+          const option = document.createElement('option');
+          option.value = JSON.stringify({
             title: news.title,
             content: news.content || news.description || '',
             id: news.link || `international_${index}`
           });
-        }
-      });
-      
-      return selectedNews;
+          option.textContent = `${news.title.substring(0, 40)}${news.title.length > 40 ? '...' : ''} (${news.source || '未知来源'})`;
+          group.appendChild(option);
+        });
+        rewriteNewsSelect.appendChild(group);
+      }
     }
-    
-    // 添加新闻项复选框
-    function addCheckboxesToNews() {
-      // 国内新闻
-      const domesticItems = document.querySelectorAll('#domesticNews .news-item');
-      domesticItems.forEach((item, index) => {
-        if (!item.querySelector('.news-checkbox')) {
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          checkbox.className = 'news-checkbox';
-          checkbox.id = `domestic_${index}`;
-          item.insertBefore(checkbox, item.firstChild);
-          
-          checkbox.addEventListener('change', (e) => {
-            if (e.target.checked) {
-              selectedNewsForBatch.add(`domestic_${index}`);
-            } else {
-              selectedNewsForBatch.delete(`domestic_${index}`);
-            }
-            selectAllNews.checked = selectedNewsForBatch.size === (domesticItems.length + document.querySelectorAll('#internationalNews .news-item').length);
-          });
-        }
-      });
-      
-      // 国际新闻
-      const internationalItems = document.querySelectorAll('#internationalNews .news-item');
-      internationalItems.forEach((item, index) => {
-        if (!item.querySelector('.news-checkbox')) {
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          checkbox.className = 'news-checkbox';
-          checkbox.id = `international_${index}`;
-          item.insertBefore(checkbox, item.firstChild);
-          
-          checkbox.addEventListener('change', (e) => {
-            if (e.target.checked) {
-              selectedNewsForBatch.add(`international_${index}`);
-            } else {
-              selectedNewsForBatch.delete(`international_${index}`);
-            }
-            selectAllNews.checked = selectedNewsForBatch.size === (domesticItems.length + internationalItems.length);
-          });
-        }
-      });
-    }
-    
-    // 全选/取消全选
-    selectAllNews.addEventListener('change', (e) => {
-      const checkboxes = document.querySelectorAll('.news-checkbox');
-      checkboxes.forEach(checkbox => {
-        checkbox.checked = e.target.checked;
-        const event = new Event('change');
-        checkbox.dispatchEvent(event);
-      });
-    });
-    
-    // 事件监听器
-    generateCommentBtn.addEventListener('click', generateSingleComment);
-    generateBatchBtn.addEventListener('click', generateBatchComments);
-    
-    // 新闻刷新时更新选择列表和复选框
-    const originalLoadNews = loadNews;
-    loadNews = async function() {
-      await originalLoadNews();
-      setTimeout(() => {
-        updateCommentNewsSelect();
-        addCheckboxesToNews();
-      }, 100);
-    };
-    
-    // 应用过滤时更新复选框
-    const originalApplyFilters = applyDomesticFilters;
-    applyDomesticFilters = function() {
-      originalApplyFilters();
-      setTimeout(addCheckboxesToNews, 100);
-    };
-    
-    const originalApplyNewsFilters = applyNewsFilters;
-    applyNewsFilters = function() {
-      originalApplyNewsFilters();
-      setTimeout(addCheckboxesToNews, 100);
-    };
 
+    // 选择新闻时自动填充手动输入框
+    rewriteNewsSelect.addEventListener('change', () => {
+      const val = rewriteNewsSelect.value;
+      if (val) {
+        try {
+          const data = JSON.parse(val);
+          rewriteManualTitle.value = data.title;
+          rewriteManualContent.value = data.content;
+        } catch (e) {}
+      }
+    });
+
+    async function doRewrite() {
+      // 优先使用手动输入的内容
+      let title = rewriteManualTitle.value.trim();
+      let content = rewriteManualContent.value.trim();
+      const style = rewriteStyleSelect.value;
+
+      if (!title && !content) {
+        // 尝试从下拉框获取
+        const selVal = rewriteNewsSelect.value;
+        if (selVal) {
+          try {
+            const data = JSON.parse(selVal);
+            title = data.title;
+            content = data.content;
+            rewriteManualTitle.value = title;
+            rewriteManualContent.value = content;
+          } catch (e) {}
+        }
+      }
+
+      if (!title && !content) {
+        rewriteStatus.textContent = '请选择或输入要改写的新闻';
+        return;
+      }
+
+      if (!content) {
+        rewriteStatus.textContent = '请提供新闻内容以便改写';
+        return;
+      }
+
+      try {
+        rewriteLoading.style.display = 'flex';
+        rewriteStatus.textContent = '正在改写新闻...';
+        rewriteResults.innerHTML = '<div class="no-results">正在生成...</div>';
+        rewriteActions.style.display = 'none';
+
+        const response = await fetch('/api/news/rewrite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, content, style })
+        });
+
+        const result = await response.json();
+        rewriteLoading.style.display = 'none';
+
+        if (result.success) {
+          rewriteStatus.textContent = `✅ 改写成功 (${result.rewrite_style}) | ${result.generation_time.toFixed(2)}秒`;
+          const styleLabel = getRewriteStyleLabel(result.rewrite_style);
+          
+          // 原文与改写对比显示
+          rewriteResults.innerHTML = `
+            <div class="rewrite-compare">
+              <div class="rewrite-panel">
+                <div class="rewrite-panel-header">📄 原文</div>
+                <div class="rewrite-panel-body">
+                  <div class="rewrite-title">${title}</div>
+                  <div class="rewrite-content">${content}</div>
+                </div>
+              </div>
+              <div class="rewrite-arrow">→</div>
+              <div class="rewrite-panel rewrite-panel-result">
+                <div class="rewrite-panel-header">✏️ 改写结果 (${styleLabel})</div>
+                <div class="rewrite-panel-body">
+                  <div class="rewrite-content">${result.rewritten_text}</div>
+                </div>
+              </div>
+            </div>
+          `;
+
+          lastRewriteResult = {
+            news_title: title,
+            original_content: content,
+            rewritten_text: result.rewritten_text,
+            style: result.rewrite_style,
+            style_label: styleLabel
+          };
+
+          rewriteActions.style.display = 'block';
+          rewriteSaveInfo.textContent = '';
+        } else {
+          rewriteStatus.textContent = `改写失败: ${result.error}`;
+          rewriteResults.innerHTML = `<div class="no-results" style="color:#ef4444;">改写失败: ${result.error}</div>`;
+        }
+      } catch (error) {
+        rewriteLoading.style.display = 'none';
+        rewriteStatus.textContent = `请求失败: ${error.message}`;
+        rewriteResults.innerHTML = `<div class="no-results" style="color:#ef4444;">请求失败: ${error.message}</div>`;
+      }
+    }
+
+    function getRewriteStyleLabel(style) {
+      const labels = {
+        'formal': '正式官方', 'casual': '轻松口语', 'concise': '简洁精炼',
+        'detailed': '详细深入', 'headline': '标题党风格', 'storytelling': '故事叙述',
+        'analytical': '分析评论', 'summary': '摘要简报'
+      };
+      return labels[style] || style;
+    }
+
+    // 复制改写结果
+    copyRewriteBtn.addEventListener('click', () => {
+      if (!lastRewriteResult) return;
+      const text = `【${lastRewriteResult.style_label}改写】\n${lastRewriteResult.rewritten_text}`;
+      navigator.clipboard.writeText(text)
+        .then(() => { rewriteSaveInfo.textContent = '✅ 改写结果已复制到剪贴板'; })
+        .catch(() => { rewriteSaveInfo.textContent = '❌ 复制失败'; });
+    });
+
+    // 保存改写结果
+    saveRewriteBtn.addEventListener('click', async () => {
+      if (!lastRewriteResult) return;
+      try {
+        rewriteSaveInfo.textContent = '正在保存...';
+        const response = await fetch('/api/news/rewrite/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(lastRewriteResult)
+        });
+        const result = await response.json();
+        if (result.success) {
+          rewriteSaveInfo.textContent = `✅ 已保存: ${result.txt_path}`;
+        } else {
+          rewriteSaveInfo.textContent = `❌ 保存失败: ${result.error}`;
+        }
+      } catch (error) {
+        rewriteSaveInfo.textContent = `❌ 保存失败: ${error.message}`;
+      }
+    });
+
+    // 重置改写
+    resetRewriteBtn.addEventListener('click', () => {
+      rewriteResults.innerHTML = '<div class="no-results">尚未生成改写结果</div>';
+      rewriteActions.style.display = 'none';
+      rewriteStatus.textContent = '准备就绪';
+      rewriteSaveInfo.textContent = '';
+      lastRewriteResult = null;
+    });
+
+    rewriteBtn.addEventListener('click', doRewrite);
+
+    // ==================== 地区分布可视化 ====================
+    const regionChartLimit = document.getElementById('regionChartLimit');
+    const refreshRegionData = document.getElementById('refreshRegionData');
+    const regionDataInfo = document.getElementById('regionDataInfo');
+    const regionUpdateTime = document.getElementById('regionUpdateTime');
+    const regionChartLoading = document.getElementById('regionChartLoading');
+    const regionChartCanvas = document.getElementById('regionChart');
+    const selectedLabel = document.getElementById('selectedLabel');
+    const selectedNewsList = document.getElementById('selectedNewsList');
+
+    let regionChart = null;
+    let regionData = null;
+    let selectedItemName = null;
+
+    async function loadRegionData() {
+      try {
+        regionDataInfo.textContent = '正在加载地区分布数据...';
+        regionChartLoading.textContent = '正在加载图表数据...';
+        regionChartLoading.style.display = 'block';
+        const limit = parseInt(regionChartLimit.value);
+        const response = await fetch(`/api/region/distribution?type=country&limit=${limit}`);
+        if (!response.ok) throw new Error('数据加载失败');
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error || '数据加载失败');
+        regionData = data;
+        updateStatistics();
+        renderRegionChart();
+        regionDataInfo.textContent = `数据加载成功 (${data.countries ? data.countries.length : 0}项)`;
+        regionUpdateTime.textContent = `更新时间: ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`;
+      } catch (error) {
+        console.error('加载地区数据失败:', error);
+        regionDataInfo.textContent = '数据加载失败: ' + error.message;
+        regionChartLoading.textContent = '图表数据加载失败';
+        regionUpdateTime.textContent = '';
+      }
+    }
+
+    function updateStatistics() {
+      if (!regionData) return;
+      if (regionData.statistics) {
+        const s = regionData.statistics;
+        document.getElementById('statTotalNews').textContent = s.total_news || '--';
+        document.getElementById('statTotalCountries').textContent = s.total_countries || '--';
+        document.getElementById('statTotalRegions').textContent = s.total_regions || '--';
+        if (s.most_frequent_country) {
+          document.getElementById('statMostFrequentCountry').textContent = `${s.most_frequent_country.name} (${s.most_frequent_country.count}次)`;
+        } else {
+          document.getElementById('statMostFrequentCountry').textContent = '--';
+        }
+      }
+    }
+
+    function renderRegionChart() {
+      if (!regionData) return;
+      regionChartLoading.style.display = 'none';
+      const ctx = regionChartCanvas.getContext('2d');
+      if (regionChart) regionChart.destroy();
+
+      const labels = regionData.countries;
+      let dataValues = regionData.counts;
+      if (!dataValues || dataValues.length === 0) {
+        regionChartLoading.textContent = '没有数据可显示';
+        regionChartLoading.style.display = 'block';
+        return;
+      }
+
+      const chartData = {
+        labels: labels,
+        datasets: [{
+          label: '新闻数量',
+          data: dataValues,
+          backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#14b8a6', '#6366f1', '#e11d48', '#a855f7', '#0ea5e9', '#d946ef'],
+          borderColor: '#1e40af',
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      };
+
+      const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',  // 水平条形图，方便阅读国家名
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `新闻数量: ${context.parsed.x} 篇`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: { beginAtZero: true, title: { display: true, text: '新闻数量' } },
+          y: { title: { display: true, text: '国家' } }
+        },
+        onClick: (event, elements) => {
+          if (elements.length > 0) {
+            const index = elements[0].index;
+            selectChartItem(labels[index], dataValues[index]);
+          }
+        }
+      };
+
+      try {
+        regionChart = new Chart(ctx, { type: 'bar', data: chartData, options: chartOptions });
+      } catch (error) {
+        console.error('图表创建失败:', error);
+        regionChartLoading.textContent = '图表创建失败: ' + error.message;
+        regionChartLoading.style.display = 'block';
+      }
+    }
+
+    function selectChartItem(name, count) {
+      selectedItemName = name;
+      selectedLabel.textContent = `国家: ${name} (${count}篇新闻)`;
+      selectedNewsList.innerHTML = '';
+      if (regionData && regionData.news_by_country && regionData.news_by_country[name]) {
+        const news = regionData.news_by_country[name];
+        selectedNewsList.innerHTML = news.map(item => `
+          <div class="news-item">
+            <a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+            <div class="news-meta">
+              <span>来源：${item.source || '未知'}</span>
+              <span>发布时间：${item.published || '未知'}</span>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        selectedNewsList.innerHTML = '<div class="news-item">暂无相关新闻</div>';
+      }
+    }
+
+    regionChartLimit.addEventListener('change', loadRegionData);
+    refreshRegionData.addEventListener('click', loadRegionData);
+
+    // ==================== 初始化 ====================
     window.addEventListener('DOMContentLoaded', async () => {
       const usedSystemCity = await setInitialCityFromSystemLocation();
       if (!usedSystemCity) {
         loadWeather(citySelect.value);
       }
       loadNews();
-      updateSaveDirectoryLabel();
-      
+
       // 初始化地区分布可视化
       setTimeout(() => {
-        loadRegionStatistics();
         loadRegionData();
-      }, 1000);
+      }, 1500);
+
+      // 改写输入框联动 - 当手动输入时清空下拉选择
+      rewriteManualTitle.addEventListener('input', () => { rewriteNewsSelect.value = ''; });
+      rewriteManualContent.addEventListener('input', () => { rewriteNewsSelect.value = ''; });
     });
+
+    // 新闻加载完成后更新选择列表
+    const origLoad = loadNews;
+    loadNews = async function() {
+      await origLoad();
+      setTimeout(() => {
+        updateCommentNewsSelect();
+      }, 100);
+    };
   </script>
 </body>
 </html>

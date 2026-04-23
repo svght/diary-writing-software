@@ -1,17 +1,15 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-智能日记本 - 浏览器版
-使用 Flask 提供本地浏览器界面，样式接近微软官网风格。
+智能新闻工作台 - 浏览器版
+使用 Flask 提供本地浏览器界面，集新闻采集、多类型评论生成、多风格改写于一体。
 """
 
 import os
 import json
-import string
 import webbrowser
 from datetime import datetime
 
-from docx import Document
 from flask import Flask, abort, jsonify, render_template, request, send_from_directory
 
 from weather_service import WeatherService
@@ -30,137 +28,6 @@ location_service = LocationService()
 news_service = NewsService()
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-SAVE_DIR = os.path.join(BASE_DIR, "saved_diaries")
-SAVE_OPTIONS = [
-    "saved_diaries",
-    "saved_diaries/archives",
-    "saved_diaries/drafts",
-]
-DEFAULT_SAVE_DIR = SAVE_OPTIONS[0]
-UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
-os.makedirs(SAVE_DIR, exist_ok=True)
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-for option in SAVE_OPTIONS:
-    os.makedirs(os.path.join(BASE_DIR, option), exist_ok=True)
-
-
-def safe_filename(value):
-    value = str(value or "").strip()
-    allowed = "-_.() %s%s" % (string.ascii_letters, string.digits)
-    return "".join(c if c in allowed else "_" for c in value)[:120]
-
-
-def format_txt(payload):
-    lines = [
-        "智能日记本 - 浏览器版",
-        "=" * 56,
-        f"标题: {payload.get('title', '日记')}",
-        f"城市: {payload.get('city', '未知')}",
-        f"保存时间: {payload.get('saved_at', '')}",
-        "",
-        "天气信息:",
-        f"  状态: {payload.get('weather', {}).get('condition', '未知')}",
-        f"  温度: {payload.get('weather', {}).get('temperature_c', '--')}°C",
-        f"  体感: {payload.get('weather', {}).get('feelslike_c', '--')}°C",
-        f"  湿度: {payload.get('weather', {}).get('humidity', '--')}%",
-        f"  风速: {payload.get('weather', {}).get('wind_kph', '--')} km/h",
-        "",
-        "日记内容:",
-        payload.get('content', ''),
-        "",
-    ]
-
-    images = payload.get('images', []) or []
-    videos = payload.get('videos', []) or []
-
-    if images:
-        lines.append("图片列表:")
-        lines.extend([f"  - {item}" for item in images])
-        lines.append("")
-
-    if videos:
-        lines.append("视频列表:")
-        lines.extend([f"  - {item}" for item in videos])
-        lines.append("")
-
-    lines.append("=" * 56)
-    return "\n".join(lines)
-
-
-def resolve_save_dir(save_dir):
-    target = str(save_dir or DEFAULT_SAVE_DIR).strip() or DEFAULT_SAVE_DIR
-    normalized = os.path.normpath(target)
-    if os.path.isabs(normalized) or normalized.startswith('..') or normalized.startswith('/') or normalized.startswith('\\'):
-        return None
-
-    save_path = os.path.abspath(os.path.join(BASE_DIR, normalized))
-    if not save_path.startswith(BASE_DIR):
-        return None
-    return save_path
-
-
-def save_docx(payload, path):
-    document = Document()
-    document.add_heading('智能日记本 - 浏览器版', level=1)
-
-    document.add_paragraph(f"标题: {payload.get('title', '日记')}")
-    document.add_paragraph(f"城市: {payload.get('city', '未知')}")
-    document.add_paragraph(f"保存时间: {payload.get('saved_at', '')}")
-
-    document.add_heading('天气信息', level=2)
-    weather = payload.get('weather', {})
-    document.add_paragraph(f"状态: {weather.get('condition', '未知')}")
-    document.add_paragraph(f"温度: {weather.get('temperature_c', '--')}°C")
-    document.add_paragraph(f"体感: {weather.get('feelslike_c', '--')}°C")
-    document.add_paragraph(f"湿度: {weather.get('humidity', '--')}%")
-    document.add_paragraph(f"风速: {weather.get('wind_kph', '--')} km/h")
-
-    document.add_heading('日记内容', level=2)
-    document.add_paragraph(payload.get('content', ''))
-
-    images = payload.get('images', []) or []
-    videos = payload.get('videos', []) or []
-    if images:
-        document.add_heading('图片列表', level=2)
-        for item in images:
-            document.add_paragraph(item, style='List Bullet')
-
-    if videos:
-        document.add_heading('视频列表', level=2)
-        for item in videos:
-            document.add_paragraph(item, style='List Bullet')
-
-    document.save(path)
-
-
-def save_diary(payload, save_dir=None):
-    target_dir = resolve_save_dir(save_dir)
-    if not target_dir:
-        target_dir = SAVE_DIR
-
-    os.makedirs(target_dir, exist_ok=True)
-
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    title = safe_filename(payload.get('title', '日记')) or 'diary'
-    city = safe_filename(payload.get('city', '未知')) or 'unknown'
-    base_name = f"{title}_{city}_{timestamp}"
-    json_filename = f"{base_name}.json"
-    txt_filename = f"{base_name}.txt"
-    docx_filename = f"{base_name}.docx"
-
-    json_path = os.path.join(target_dir, json_filename)
-    txt_path = os.path.join(target_dir, txt_filename)
-    docx_path = os.path.join(target_dir, docx_filename)
-
-    with open(json_path, 'w', encoding='utf-8') as f:
-        json.dump(payload, f, ensure_ascii=False, indent=2)
-
-    with open(txt_path, 'w', encoding='utf-8') as f:
-        f.write(format_txt(payload))
-
-    save_docx(payload, docx_path)
-
-    return json_filename, txt_filename, docx_filename
 
 
 @app.route('/')
@@ -170,9 +37,6 @@ def index():
         'index.html',
         default_city=default_city,
         cities=CHINESE_CITIES,
-        save_dirs=SAVE_OPTIONS,
-        default_save_dir=DEFAULT_SAVE_DIR,
-        base_dir=BASE_DIR,
     )
 
 
@@ -188,27 +52,26 @@ def api_weather():
 @app.route('/api/news')
 def api_news():
     news = news_service.get_hot_news()
-    
+
     # 更新热度趋势数据
     try:
         update_trend_with_news(news)
     except Exception as e:
         print(f"更新趋势数据失败: {e}")
-    
+
     # 更新地区分布数据
     try:
-        # 合并国内和国际新闻
         all_news = []
         if 'domestic' in news:
             all_news.extend(news['domestic'])
         if 'international' in news:
             all_news.extend(news['international'])
-        
+
         if all_news:
             update_region_with_news(all_news)
     except Exception as e:
         print(f"更新地区数据失败: {e}")
-    
+
     return jsonify(success=True, **news)
 
 
@@ -217,55 +80,39 @@ def api_analyze_entities():
     """分析新闻实体（人物+国家）"""
     try:
         data = request.json or {}
-        
-        # 支持两种输入格式：
-        # 1. 直接提供新闻内容
-        # 2. 提供新闻ID从现有新闻中查找
         text = data.get('text', '')
         title = data.get('title', '')
         news_id = data.get('news_id')
-        
-        # 如果没有提供文本，尝试从现有新闻中查找
+
         if not text and news_id:
-            # 获取所有新闻
             news_data = news_service.get_hot_news()
-            # 在国内和国际新闻中查找
             for category in ['domestic', 'international']:
                 if category in news_data:
                     for item in news_data[category]:
-                        # 简单比较，实际应用中可能需要更准确的ID匹配
                         if str(item.get('link', '')).find(str(news_id)) != -1 or \
                            str(item.get('title', '')).find(str(news_id)) != -1:
                             title = item.get('title', '')
-                            # 尝试获取内容，如果没有则使用标题
                             content = item.get('content', '') or item.get('description', '') or title
                             text = content
                             break
-        
+
         if not text and title:
             text = title
-        
+
         if not text:
-            return jsonify(
-                success=False, 
-                error='请提供新闻文本、标题或新闻ID'
-            ), 400
-        
-        # 使用分析器提取实体
+            return jsonify(success=False, error='请提供新闻文本、标题或新闻ID'), 400
+
         analyzer = get_analyzer()
         result = analyzer.extract_entities(text, title)
-        
+
         return jsonify({
             "success": True,
             "entities": result,
             "text_preview": text[:100] + "..." if len(text) > 100 else text
         })
-        
+
     except Exception as e:
-        return jsonify(
-            success=False,
-            error=f'分析失败: {str(e)}'
-        ), 500
+        return jsonify(success=False, error=f'分析失败: {str(e)}'), 500
 
 
 @app.route('/api/news/analyze/summary', methods=['POST'])
@@ -273,41 +120,28 @@ def api_analyze_summary():
     """生成新闻摘要"""
     try:
         data = request.json or {}
-        
-        # 支持两种输入格式：
-        # 1. 直接提供新闻内容
-        # 2. 提供新闻ID从现有新闻中查找
         text = data.get('text', '')
         title = data.get('title', '')
         news_id = data.get('news_id')
-        
-        # 如果没有提供文本，尝试从现有新闻中查找
+
         if not text and news_id:
-            # 获取所有新闻
             news_data = news_service.get_hot_news()
-            # 在国内和国际新闻中查找
             for category in ['domestic', 'international']:
                 if category in news_data:
                     for item in news_data[category]:
-                        # 简单比较，实际应用中可能需要更准确的ID匹配
                         if str(item.get('link', '')).find(str(news_id)) != -1 or \
                            str(item.get('title', '')).find(str(news_id)) != -1:
                             title = item.get('title', '')
-                            # 尝试获取内容，如果没有则使用标题
                             content = item.get('content', '') or item.get('description', '') or title
                             text = content
                             break
-        
+
         if not text and title:
             text = title
-        
+
         if not text:
-            return jsonify(
-                success=False, 
-                error='请提供新闻文本、标题或新闻ID'
-            ), 400
-        
-        # 构建新闻项（模拟结构）
+            return jsonify(success=False, error='请提供新闻文本、标题或新闻ID'), 400
+
         news_item = {
             'title': title,
             'content': text,
@@ -315,21 +149,14 @@ def api_analyze_summary():
             'region': data.get('region', ''),
             'description': text
         }
-        
-        # 使用摘要生成器生成摘要
+
         summarizer = get_summarizer()
         result = summarizer.summarize_news(news_item)
-        
-        return jsonify({
-            "success": True,
-            "summary": result
-        })
-        
+
+        return jsonify({"success": True, "summary": result})
+
     except Exception as e:
-        return jsonify(
-            success=False,
-            error=f'摘要生成失败: {str(e)}'
-        ), 500
+        return jsonify(success=False, error=f'摘要生成失败: {str(e)}'), 500
 
 
 @app.route('/api/news/analyze/sentiment', methods=['POST'])
@@ -337,99 +164,71 @@ def api_analyze_sentiment():
     """分析新闻情感"""
     try:
         data = request.json or {}
-        
-        # 支持两种输入格式：
-        # 1. 直接提供新闻内容
-        # 2. 提供新闻ID从现有新闻中查找
         text = data.get('text', '')
         title = data.get('title', '')
         news_id = data.get('news_id')
-        
-        # 如果没有提供文本，尝试从现有新闻中查找
+
         if not text and news_id:
-            # 获取所有新闻
             news_data = news_service.get_hot_news()
-            # 在国内和国际新闻中查找
             for category in ['domestic', 'international']:
                 if category in news_data:
                     for item in news_data[category]:
-                        # 简单比较，实际应用中可能需要更准确的ID匹配
                         if str(item.get('link', '')).find(str(news_id)) != -1 or \
                            str(item.get('title', '')).find(str(news_id)) != -1:
                             title = item.get('title', '')
-                            # 尝试获取内容，如果没有则使用标题
                             content = item.get('content', '') or item.get('description', '') or title
                             text = content
                             break
-        
+
         if not text and title:
             text = title
-        
+
         if not text:
-            return jsonify(
-                success=False, 
-                error='请提供新闻文本、标题或新闻ID'
-            ), 400
-        
-        # 使用情感分析器分析情感
+            return jsonify(success=False, error='请提供新闻文本、标题或新闻ID'), 400
+
         analyzer = get_sentiment_analyzer()
         result = analyzer.analyze_sentiment(text, title)
-        
-        return jsonify({
-            "success": True,
-            "sentiment": result
-        })
-        
-    except Exception as e:
-        return jsonify(
-            success=False,
-            error=f'情感分析失败: {str(e)}'
-        ), 500
 
+        return jsonify({"success": True, "sentiment": result})
+
+    except Exception as e:
+        return jsonify(success=False, error=f'情感分析失败: {str(e)}'), 500
+
+
+# ==================== 评论生成（强化） ====================
 
 @app.route('/api/news/analyze/comment', methods=['POST'])
 def api_analyze_comment():
-    """生成新闻评论"""
+    """生成新闻评论（支持多类型）"""
     try:
         data = request.json or {}
-        
-        # 支持两种输入格式：
-        # 1. 直接提供新闻内容
-        # 2. 提供新闻ID从现有新闻中查找
+
         text = data.get('text', '')
         title = data.get('title', '')
         news_id = data.get('news_id')
-        
-        # 如果没有提供文本，尝试从现有新闻中查找
+        comment_type = data.get('comment_type', 'insightful')  # 评论类型参数
+
         if not text and news_id:
-            # 获取所有新闻
             news_data = news_service.get_hot_news()
-            # 在国内和国际新闻中查找
             for category in ['domestic', 'international']:
                 if category in news_data:
                     for item in news_data[category]:
-                        # 简单比较，实际应用中可能需要更准确的ID匹配
                         if str(item.get('link', '')).find(str(news_id)) != -1 or \
                            str(item.get('title', '')).find(str(news_id)) != -1:
                             title = item.get('title', '')
-                            # 尝试获取内容，如果没有则使用标题
                             content = item.get('content', '') or item.get('description', '') or title
                             text = content
                             break
-        
+
         if not text and title:
             text = title
-        
+
         if not text:
-            return jsonify(
-                success=False, 
-                error='请提供新闻文本、标题或新闻ID'
-            ), 400
-        
-        # 使用DeepSeek生成器生成评论
+            return jsonify(success=False, error='请提供新闻文本、标题或新闻ID'), 400
+
         generator = get_deepseek_generator()
-        result = generator.generate_comment_for_news(title, text, news_id)
-        
+        result = generator.generate_comment_for_news(title, text, news_id, comment_type)
+
         return jsonify({
             "success": result.success,
             "comment": result.comment,
@@ -439,14 +238,12 @@ def api_analyze_comment():
             "generation_time": result.generation_time,
             "cached": result.cached,
             "news_id": result.news_id,
-            "news_title": result.news_title
+            "news_title": result.news_title,
+            "comment_type": result.comment_type
         })
-        
+
     except Exception as e:
-        return jsonify(
-            success=False,
-            error=f'评论生成失败: {str(e)}'
-        ), 500
+        return jsonify(success=False, error=f'评论生成失败: {str(e)}'), 500
 
 
 @app.route('/api/news/analyze/comment/batch', methods=['POST'])
@@ -454,36 +251,27 @@ def api_analyze_comment_batch():
     """批量生成新闻评论"""
     try:
         data = request.json or {}
-        
         news_items = data.get('news_items', [])
+        comment_type = data.get('comment_type', 'insightful')
+
         if not news_items:
-            return jsonify(
-                success=False, 
-                error='请提供新闻列表'
-            ), 400
-        
-        # 验证新闻项目格式
+            return jsonify(success=False, error='请提供新闻列表'), 400
+
         validated_items = []
         for i, item in enumerate(news_items):
             title = item.get('title', '')
             if not title:
-                return jsonify(
-                    success=False,
-                    error=f'第{i+1}个新闻项缺少标题'
-                ), 400
-            
+                return jsonify(success=False, error=f'第{i+1}个新闻项缺少标题'), 400
             validated_items.append({
                 'title': title,
                 'content': item.get('content', ''),
                 'id': item.get('id', f'news_{i}')
             })
-        
-        # 使用DeepSeek生成器批量生成评论
+
         generator = get_deepseek_generator()
         max_concurrent = data.get('max_concurrent', 3)
-        results = generator.generate_comments_batch(validated_items, max_concurrent)
-        
-        # 转换为可序列化的字典列表
+        results = generator.generate_comments_batch(validated_items, max_concurrent, comment_type)
+
         results_list = []
         for result in results:
             results_list.append({
@@ -495,9 +283,10 @@ def api_analyze_comment_batch():
                 'generation_time': result.generation_time,
                 'cached': result.cached,
                 'news_id': result.news_id,
-                'news_title': result.news_title
+                'news_title': result.news_title,
+                'comment_type': result.comment_type
             })
-        
+
         return jsonify({
             "success": True,
             "results": results_list,
@@ -505,13 +294,93 @@ def api_analyze_comment_batch():
             "successful": sum(1 for r in results_list if r['success']),
             "failed": sum(1 for r in results_list if not r['success'])
         })
-        
-    except Exception as e:
-        return jsonify(
-            success=False,
-            error=f'批量评论生成失败: {str(e)}'
-        ), 500
 
+    except Exception as e:
+        return jsonify(success=False, error=f'批量评论生成失败: {str(e)}'), 500
+
+
+# ==================== 新闻改写（新增） ====================
+
+@app.route('/api/news/rewrite', methods=['POST'])
+def api_rewrite_news():
+    """改写新闻"""
+    try:
+        data = request.json or {}
+        title = data.get('title', '')
+        content = data.get('content', '')
+        style = data.get('style', 'formal')  # 改写风格参数
+
+        if not title and not content:
+            return jsonify(success=False, error='请提供新闻标题或内容'), 400
+
+        generator = get_deepseek_generator()
+        result = generator.rewrite_news(title, content, style)
+
+        return jsonify({
+            "success": result.success,
+            "rewritten_text": result.rewritten_text,
+            "error": result.error,
+            "model": result.model,
+            "usage_tokens": result.usage_tokens,
+            "generation_time": result.generation_time,
+            "news_title": result.news_title,
+            "rewrite_style": result.rewrite_style
+        })
+
+    except Exception as e:
+        return jsonify(success=False, error=f'新闻改写失败: {str(e)}'), 500
+
+
+@app.route('/api/news/rewrite/save', methods=['POST'])
+def api_save_rewrite():
+    """保存改写结果"""
+    try:
+        data = request.json or {}
+        news_title = data.get('news_title', '')
+        original_content = data.get('original_content', '')
+        rewritten_text = data.get('rewritten_text', '')
+        style = data.get('style', 'formal')
+
+        if not rewritten_text:
+            return jsonify(success=False, error='没有可保存的改写结果'), 400
+
+        generator = get_deepseek_generator()
+        paths = generator.save_rewrite_result(news_title, original_content, rewritten_text, style)
+
+        return jsonify({
+            "success": True,
+            "json_path": paths["json_path"],
+            "txt_path": paths["txt_path"],
+            "message": "改写结果已保存"
+        })
+
+    except Exception as e:
+        return jsonify(success=False, error=f'保存改写结果失败: {str(e)}'), 500
+
+
+@app.route('/api/news/comment-types', methods=['GET'])
+def api_comment_types():
+    """获取支持的评论类型列表"""
+    try:
+        generator = get_deepseek_generator()
+        types = generator.get_comment_types_info()
+        return jsonify({"success": True, "comment_types": types})
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+@app.route('/api/news/rewrite-styles', methods=['GET'])
+def api_rewrite_styles():
+    """获取支持的改写风格列表"""
+    try:
+        generator = get_deepseek_generator()
+        styles = generator.get_rewrite_styles_info()
+        return jsonify({"success": True, "rewrite_styles": styles})
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+
+# ==================== 原有功能保留 ====================
 
 @app.route('/api/deepseek/usage')
 def api_deepseek_usage():
@@ -519,29 +388,20 @@ def api_deepseek_usage():
     try:
         generator = get_deepseek_generator()
         usage_info = generator.get_usage_info()
-        
-        return jsonify({
-            "success": True,
-            "usage_info": usage_info
-        })
-        
+        return jsonify({"success": True, "usage_info": usage_info})
     except Exception as e:
-        return jsonify(
-            success=False,
-            error=f'获取使用量统计失败: {str(e)}'
-        ), 500
+        return jsonify(success=False, error=f'获取使用量统计失败: {str(e)}'), 500
 
 
 @app.route('/api/trend/hotness')
 def api_trend_hotness():
     """获取热度趋势数据"""
     try:
-        # 获取参数
-        trend_type = request.args.get('type', 'hourly')  # hourly, daily, weekly
+        trend_type = request.args.get('type', 'hourly')
         period = request.args.get('period')
-        
+
         analyzer = get_trend_analyzer()
-        
+
         if trend_type == 'hourly':
             hours = int(period) if period and period.isdigit() else 24
             result = analyzer.get_hourly_trend(hours)
@@ -552,18 +412,12 @@ def api_trend_hotness():
             weeks = int(period) if period and period.isdigit() else 4
             result = analyzer.get_weekly_trend(weeks)
         else:
-            return jsonify(
-                success=False,
-                error='不支持的趋势类型，请使用 hourly, daily 或 weekly'
-            ), 400
-        
+            return jsonify(success=False, error='不支持的趋势类型'), 400
+
         return jsonify(result)
-        
+
     except Exception as e:
-        return jsonify(
-            success=False,
-            error=f'获取趋势数据失败: {str(e)}'
-        ), 500
+        return jsonify(success=False, error=f'获取趋势数据失败: {str(e)}'), 500
 
 
 @app.route('/api/trend/statistics')
@@ -574,18 +428,14 @@ def api_trend_statistics():
         result = analyzer.get_trend_statistics()
         return jsonify(result)
     except Exception as e:
-        return jsonify(
-            success=False,
-            error=f'获取统计信息失败: {str(e)}'
-        ), 500
+        return jsonify(success=False, error=f'获取统计信息失败: {str(e)}'), 500
 
 
 @app.route('/api/region/distribution')
 def api_region_distribution():
-    """获取地区分布数据（饼状图功能已移除）"""
+    """获取地区分布数据"""
     try:
-        # 获取参数
-        dist_type = request.args.get('type', 'country')  # country (饼状图功能已移除)
+        dist_type = request.args.get('type', 'country')
         limit = request.args.get('limit', '20')
 
         analyzer = get_region_analyzer()
@@ -594,18 +444,12 @@ def api_region_distribution():
             limit_int = int(limit) if limit and limit.isdigit() else 20
             result = analyzer.get_country_distribution(limit_int)
         else:
-            return jsonify(
-                success=False,
-                error='不支持的分布类型，请使用 country（饼状图功能已移除）'
-            ), 400
+            return jsonify(success=False, error='不支持的分布类型'), 400
 
         return jsonify(result)
-        
+
     except Exception as e:
-        return jsonify(
-            success=False,
-            error=f'获取地区分布数据失败: {str(e)}'
-        ), 500
+        return jsonify(success=False, error=f'获取地区分布数据失败: {str(e)}'), 500
 
 
 @app.route('/api/region/statistics')
@@ -616,10 +460,7 @@ def api_region_statistics():
         result = analyzer.get_region_statistics()
         return jsonify(result)
     except Exception as e:
-        return jsonify(
-            success=False,
-            error=f'获取地区统计信息失败: {str(e)}'
-        ), 500
+        return jsonify(success=False, error=f'获取地区统计信息失败: {str(e)}'), 500
 
 
 @app.route('/api/region/news/by-country', methods=['GET'])
@@ -628,24 +469,14 @@ def api_region_news_by_country():
     try:
         country = request.args.get('country', '')
         limit = request.args.get('limit', '10')
-        
         if not country:
-            return jsonify(
-                success=False,
-                error='请提供国家名称'
-            ), 400
-        
+            return jsonify(success=False, error='请提供国家名称'), 400
         limit_int = int(limit) if limit and limit.isdigit() else 10
-        
         analyzer = get_region_analyzer()
         result = analyzer.get_news_by_country(country, limit_int)
         return jsonify(result)
-        
     except Exception as e:
-        return jsonify(
-            success=False,
-            error=f'获取国家新闻失败: {str(e)}'
-        ), 500
+        return jsonify(success=False, error=f'获取国家新闻失败: {str(e)}'), 500
 
 
 @app.route('/api/region/news/by-region', methods=['GET'])
@@ -654,24 +485,14 @@ def api_region_news_by_region():
     try:
         region = request.args.get('region', '')
         limit = request.args.get('limit', '10')
-        
         if not region:
-            return jsonify(
-                success=False,
-                error='请提供地区名称'
-            ), 400
-        
+            return jsonify(success=False, error='请提供地区名称'), 400
         limit_int = int(limit) if limit and limit.isdigit() else 10
-        
         analyzer = get_region_analyzer()
         result = analyzer.get_news_by_region(region, limit_int)
         return jsonify(result)
-        
     except Exception as e:
-        return jsonify(
-            success=False,
-            error=f'获取地区新闻失败: {str(e)}'
-        ), 500
+        return jsonify(success=False, error=f'获取地区新闻失败: {str(e)}'), 500
 
 
 @app.route('/api/geocode')
@@ -689,80 +510,6 @@ def api_geocode():
         return jsonify(success=False, error='无法解析城市'), 404
 
     return jsonify(success=True, city=city)
-
-
-@app.route('/api/save', methods=['POST'])
-def api_save():
-    data = request.json or {}
-    content = data.get('content', '').strip()
-    if not content:
-        return jsonify(success=False, error='请填写日记内容'), 400
-
-    save_dir = data.get('save_dir', DEFAULT_SAVE_DIR)
-    if not resolve_save_dir(save_dir):
-        return jsonify(success=False, error='保存目录无效，请选择正确的目录'), 400
-
-    payload = {
-        'title': data.get('title', '日记').strip() or '日记',
-        'city': data.get('city', '北京').strip() or '北京',
-        'weather': data.get('weather', {}),
-        'content': content,
-        'images': data.get('images', []),
-        'videos': data.get('videos', []),
-        'saved_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-    }
-
-    json_filename, txt_filename, docx_filename = save_diary(payload, save_dir=save_dir)
-    return jsonify(
-        success=True,
-        json_file=json_filename,
-        txt_file=txt_filename,
-        docx_file=docx_filename,
-        save_dir=save_dir,
-        message='保存成功'
-    )
-
-
-@app.route('/api/upload_media', methods=['POST'])
-def upload_media():
-    media_type = request.form.get('type')
-    if media_type not in ('image', 'video'):
-        return jsonify(success=False, error='不支持的媒体类型'), 400
-
-    files = request.files.getlist('files')
-    if not files:
-        return jsonify(success=False, error='未检测到上传文件'), 400
-
-    saved_paths = []
-    for uploaded in files:
-        filename = safe_filename(uploaded.filename)
-        if not filename:
-            continue
-
-        prefix = 'img' if media_type == 'image' else 'vid'
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
-        saved_name = f"{prefix}_{timestamp}_{filename}"
-        saved_path = os.path.join(UPLOAD_DIR, saved_name)
-        uploaded.save(saved_path)
-        saved_paths.append(f"uploads/{saved_name}")
-
-    if not saved_paths:
-        return jsonify(success=False, error='文件保存失败'), 500
-
-    return jsonify(success=True, items=saved_paths)
-
-
-@app.route('/uploads/<path:filename>')
-def uploaded_file(filename):
-    return send_from_directory(UPLOAD_DIR, filename)
-
-
-@app.route('/download/<path:save_dir>/<path:filename>')
-def download(save_dir, filename):
-    save_path = resolve_save_dir(save_dir)
-    if not save_path:
-        abort(404)
-    return send_from_directory(save_path, filename, as_attachment=True)
 
 
 def open_browser(url):

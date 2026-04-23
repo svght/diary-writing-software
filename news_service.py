@@ -1,3 +1,4 @@
+import re
 import time
 import requests
 from xml.etree import ElementTree as ET
@@ -34,10 +35,25 @@ class NewsService:
         except requests.RequestException:
             return None
 
+    @staticmethod
+    def _remove_lone_surrogates(text: str) -> str:
+        """移除可能导致JSON解析错误的单独代理项（lone surrogate characters）"""
+        if not isinstance(text, str):
+            return str(text) if text is not None else ""
+        # 移除孤立的高代理项（后面没有低代理项）
+        text = re.sub(r'[\uD800-\uDBFF](?![\uDC00-\uDFFF])', '', text)
+        # 移除孤立的低代理项（前面没有高代理项）
+        text = re.sub(r'(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]', '', text)
+        return text
+
     def _clean_text(self, value):
         if not value:
             return ''
-        return ' '.join(str(value).split())
+        text = str(value)
+        # 先移除lone surrogate字符
+        text = self._remove_lone_surrogates(text)
+        # 压缩空白
+        return ' '.join(text.split())
 
     def _parse_rss(self, xml_text, max_items=10):
         items = []

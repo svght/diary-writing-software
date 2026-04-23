@@ -1,7 +1,7 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-启动脚本 - 智能日记本 浏览器版
+启动脚本 - 智能新闻工作台
 简化依赖检查并启动本地浏览器界面。
 """
 
@@ -45,7 +45,7 @@ def install_dependencies():
 def main():
     """主函数"""
     print("=" * 50)
-    print("智能日记本 - 浏览器版 启动器")
+    print("智能新闻工作台 - 启动器")
     print("=" * 50)
 
     missing = check_dependencies()
