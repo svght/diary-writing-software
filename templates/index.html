@@ -1110,13 +1110,29 @@
       }
     }
 
-    function renderSearchResults(container, list, keyword, loadingElement) {
+    const PAGE_SIZE = 10;
+
+    function renderSearchResults(container, list, keyword, loadingElement, page) {
       if (!container) return;
       loadingElement.textContent = '';
       container.style.display = 'grid';
 
+      const totalPages = Math.ceil(list.length / PAGE_SIZE);
+      page = page || 1;
+      if (page < 1) page = 1;
+      if (page > totalPages) page = totalPages;
+
+      // 保存完整列表到容器，供分页按钮回调用
+      container.dataset.fullList = JSON.stringify(list);
+      container.dataset.keyword = keyword || '';
+      container.dataset.page = page;
+
+      const start = (page - 1) * PAGE_SIZE;
+      const end = Math.min(start + PAGE_SIZE, list.length);
+      const pageItems = list.slice(start, end);
+
       const escapedKeyword = keyword ? keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
-      container.innerHTML = list.map(item => {
+      const itemsHtml = pageItems.map(item => {
         const titleHtml = escapedKeyword ? highlightKeyword(item.title || '', keyword) : (item.title || '');
         const sourceHtml = escapedKeyword && item.source ? highlightKeyword(item.source, keyword) : (item.source || '未知');
         const regionHtml = item.region || '';
@@ -1136,6 +1152,51 @@
           </li>
         `;
       }).join('');
+
+      // 生成分页按钮
+      let paginationHtml = '';
+      if (totalPages > 1) {
+        let pages = [];
+        // 显示所有页码，最多显示10个，超出用省略号
+        const maxVisible = 10;
+        if (totalPages <= maxVisible) {
+          for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+          pages.push(1);
+          let startP = Math.max(2, page - 3);
+          let endP = Math.min(totalPages - 1, page + 3);
+          if (startP > 2) pages.push('...');
+          for (let i = startP; i <= endP; i++) pages.push(i);
+          if (endP < totalPages - 1) pages.push('...');
+          pages.push(totalPages);
+        }
+
+        paginationHtml = '<div class="pagination">';
+        pages.forEach(p => {
+          if (p === '...') {
+            paginationHtml += '<span class="page-ellipsis">…</span>';
+          } else {
+            paginationHtml += `<button class="page-btn ${p === page ? 'active' : ''}" data-page="${p}">${p}</button>`;
+          }
+        });
+        paginationHtml += `</div>`;
+      }
+
+      container.innerHTML = itemsHtml + paginationHtml;
+
+      // 绑定分页按钮事件
+      if (totalPages > 1) {
+        container.querySelectorAll('.page-btn').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const p = parseInt(this.dataset.page);
+            if (p === page) return;
+            const fullList = JSON.parse(container.dataset.fullList || '[]');
+            const kw = container.dataset.keyword || '';
+            renderSearchResults(container, fullList, kw, loadingElement, p);
+          });
+        });
+      }
     }
 
     // 高级筛选切换
@@ -2380,24 +2441,24 @@ function initMapView() {
         // 调用WordCloud - 优化参数减少留白
         if (typeof WordCloud !== 'undefined') {
           const maxWeight = Math.max(...words.map(w => w[1]));
-          const baseSize = Math.min(canvasWidth, canvasHeight) / 12;
+          const safeMax = Math.min(canvasWidth, canvasHeight) / 10;
           WordCloud(canvas, {
             list: words,
-            gridSize: 8,
-            weightFactor: function(w) { return Math.pow(w / maxWeight, 0.5) * baseSize + 10; },
+            gridSize: 12,
+            weightFactor: function(w) { return Math.min(Math.pow(w / maxWeight, 0.6) * 18 + 8, safeMax); },
             fontFamily: 'Microsoft YaHei, sans-serif',
             color: function(word, weight) {
               const colors = ['#1e40af', '#3b82f6', '#60a5fa', '#7c3aed', '#8b5cf6', '#a78bfa', '#059669', '#10b981', '#34d399', '#d97706', '#f59e0b', '#fbbf24', '#dc2626', '#ef4444', '#f87171', '#db2777', '#ec4899', '#f472b6'];
               return colors[Math.floor(Math.random() * colors.length)];
             },
-            rotateRatio: 0.4,
-            minSize: 10,
-            maxSize: Math.min(canvasWidth, canvasHeight) / 6,
+            rotateRatio: 0.15,
+            minSize: 8,
             shape: 'circle',
-            ellipticity: 0.65,
+            ellipticity: 0.7,
             shuffle: false,
             backgroundColor: '#ffffff',
-            clearCanvas: true
+            clearCanvas: true,
+            weightMode: 'size'
           });
           
           // 更新统计信息
