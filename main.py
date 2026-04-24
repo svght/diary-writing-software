@@ -21,6 +21,7 @@ from sentiment_analyzer import get_sentiment_analyzer, analyze_sentiment_from_ne
 from trend_analyzer import get_trend_analyzer, update_trend_with_news
 from region_analyzer import get_region_analyzer, update_region_with_news
 from deepseek_comment_generator import get_deepseek_generator
+from word_cloud_service import get_word_cloud_service
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 weather_service = WeatherService()
@@ -479,6 +480,20 @@ def api_region_news_by_country():
         return jsonify(success=False, error=f'获取国家新闻失败: {str(e)}'), 500
 
 
+@app.route('/api/trend')
+def api_trend():
+    """获取新闻热度趋势数据"""
+    try:
+        days = request.args.get('days', '30')
+        days_int = int(days) if days and days.isdigit() else 30
+        
+        analyzer = get_trend_analyzer()
+        result = analyzer.get_trend_data(days_int)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(success=False, error=f'获取趋势数据失败: {str(e)}'), 500
+
+
 @app.route('/api/region/news/by-region', methods=['GET'])
 def api_region_news_by_region():
     """获取指定地区的新闻"""
@@ -510,6 +525,32 @@ def api_geocode():
         return jsonify(success=False, error='无法解析城市'), 404
 
     return jsonify(success=True, city=city)
+
+
+@app.route('/api/wordcloud')
+def api_wordcloud():
+    """获取新闻词云数据"""
+    try:
+        # 获取新闻数据
+        news_data = news_service.get_hot_news()
+        
+        # 合并国内和国际新闻
+        all_news = []
+        if 'domestic' in news_data:
+            all_news.extend(news_data['domestic'])
+        if 'international' in news_data:
+            all_news.extend(news_data['international'])
+        
+        # 提取关键词
+        word_cloud_service = get_word_cloud_service()
+        keywords = word_cloud_service.extract_keywords(all_news, top_n=100)
+        
+        return jsonify({
+            "success": True,
+            "keywords": keywords
+        })
+    except Exception as e:
+        return jsonify(success=False, error=f'获取词云数据失败: {str(e)}'), 500
 
 
 def open_browser(url):

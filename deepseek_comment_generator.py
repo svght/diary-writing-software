@@ -347,20 +347,36 @@ class DeepSeekCommentGenerator:
             else:
                 cleaned_messages.append(msg)
 
-        payload = {
-            "model": self.model,
-            "messages": cleaned_messages,
-            "max_tokens": max_tokens,
-            "temperature": temperature,
-            "top_p": 0.9,
-            "stream": False
-        }
+        # 根据模型类型构建不同的payload
+        # deepseek-reasoner 是推理模型，有特殊要求：
+        #   - 不支持 temperature 和 top_p 参数
+        #   - 应使用 max_completion_tokens 而非 max_tokens
+        #   - API 响应中可能包含 reasoning_content 字段（思考过程），需忽略
+        if self.model == "deepseek-reasoner":
+            payload = {
+                "model": self.model,
+                "messages": cleaned_messages,
+                "max_completion_tokens": max_tokens,
+                "stream": False
+            }
+        else:
+            payload = {
+                "model": self.model,
+                "messages": cleaned_messages,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+                "top_p": 0.9,
+                "stream": False
+            }
 
         try:
             response = requests.post(self.api_url, headers=headers, json=payload, timeout=60)
             response.raise_for_status()
             data = response.json()
-            content = data["choices"][0]["message"]["content"].strip()
+            message = data["choices"][0]["message"]
+            # 对于 deepseek-reasoner，响应中可能包含 reasoning_content 字段
+            # 我们只提取 content，忽略 reasoning_content（思考过程）
+            content = message.get("content", "").strip()
             usage = data.get("usage", {})
             tokens_used = usage.get("total_tokens", 0)
             return True, {"content": content, "usage": usage, "tokens_used": tokens_used}, ""
