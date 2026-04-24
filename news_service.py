@@ -2,6 +2,7 @@ import re
 import time
 import requests
 from xml.etree import ElementTree as ET
+from database import get_database
 
 
 class NewsService:
@@ -17,6 +18,7 @@ class NewsService:
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
+        self.db = get_database()
 
     def _fetch_feed(self, url, timeout=5):
         try:
@@ -497,139 +499,34 @@ class NewsService:
                     sentiment: str = 'all', max_results: int = 50) -> list:
         """
         全文搜索新闻（标题+内容），支持高级筛选
-
-        Args:
-            keyword: 搜索关键词（为空则返回所有）
-            category: 'domestic' / 'international' / 'all'
-            fulltext: 是否搜索内容（否则仅搜索标题）
-            time_range: '24h' / '3d' / '7d' / '30d' / 'all'
-            source: 来源筛选（为空不过滤）
-            sentiment: 'positive' / 'negative' / 'neutral' / 'all'
-            max_results: 最大返回数量
-
-        Returns:
-            匹配的新闻列表
+        优先从数据库搜索，数据库无结果则抓取并缓存
         """
-        from datetime import datetime, timedelta, timezone
-
+        # 先尝试从数据库搜索
+        db_results = self.db.search_news_db(
+            keyword=keyword, category=category if category != 'all' else 'all',
+            fulltext=fulltext, time_range=time_range,
+            source=source, sentiment=sentiment, max_results=max_results
+        )
+        
+        if db_results:
+            return db_results
+        
+        # 数据库无结果，抓取并缓存
         news_data = self.get_hot_news()
-        results = []
-
-        # 收集新闻
-        if category in ('domestic', 'all'):
-            for item in news_data.get('domestic', []):
-                item['_category'] = 'domestic'
-                results.append(item)
-        if category in ('international', 'all'):
-            for item in news_data.get('international', []):
-                item['_category'] = 'international'
-                results.append(item)
-
-        # 关键词过滤
-        if keyword:
-            kw = keyword.lower().strip()
-            filtered = []
-            for item in results:
-                title = (item.get('title') or '').lower()
-                content = (item.get('content') or item.get('description') or '').lower()
-                source_text = (item.get('source') or '').lower()
-                region = (item.get('region') or '').lower()
-
-                match = False
-                # 标题匹配
-                if kw in title:
-                    match = True
-                # 来源匹配
-                if kw in source_text:
-                    match = True
-                # 地区匹配
-                if kw in region:
-                    match = True
-                # 内容匹配（全文搜索）
-                if fulltext and kw in content:
-                    match = True
-
-                if match:
-                    filtered.append(item)
-            results = filtered
-
-        # 时间范围筛选
-        if time_range != 'all':
-            now = datetime.now(timezone.utc)
-            time_map = {
-                '24h': timedelta(hours=24),
-                '3d': timedelta(days=3),
-                '7d': timedelta(days=7),
-                '30d': timedelta(days=30),
-            }
-            delta = time_map.get(time_range)
-            if delta:
-                cutoff = now - delta
-                time_filtered = []
-                for item in results:
-                    pub_date = item.get('published', '')
-                    if pub_date:
-                        try:
-                            # 尝试多种日期格式
-                            for fmt in ['%Y-%m-%d %H:%M:%S', '%a, %d %b %Y %H:%M:%S %z',
-                                        '%Y-%m-%d', '%a, %d %b %Y']:
-                                try:
-                                    dt = datetime.strptime(pub_date, fmt)
-                                    if dt.tzinfo is None:
-                                        dt = dt.replace(tzinfo=timezone.utc)
-                                    if dt >= cutoff:
-                                        time_filtered.append(item)
-                                    break
-                                except ValueError:
-                                    continue
-                            else:
-                                time_filtered.append(item)
-                        except Exception:
-                            time_filtered.append(item)
-                    else:
-                        time_filtered.append(item)
-                results = time_filtered
-
-        # 来源筛选
-        if source:
-            source_lower = source.lower().strip()
-            results = [item for item in results
-                       if source_lower in (item.get('source') or '').lower()]
-
-        # 情感筛选（需要调用情感分析 - 仅对少量结果分析以避免性能开销）
-        if sentiment != 'all' and results:
-            from sentiment_analyzer import get_sentiment_analyzer
-            analyzer = get_sentiment_analyzer()
-            sentiment_filtered = []
-            for item in results[:30]:  # 最多分析30条以保持性能
-                title = item.get('title', '')
-                content = item.get('content') or item.get('description') or title
-                try:
-                    result = analyzer.analyze_sentiment(content, title)
-                    item['_sentiment'] = result.get('sentiment', 'neutral')
-                    item['_sentiment_label'] = result.get('sentiment_label', '中性')
-                    item['_sentiment_score'] = result.get('score', 0)
-                    if result.get('sentiment') == sentiment:
-                        sentiment_filtered.append(item)
-                except Exception:
-                    sentiment_filtered.append(item)
-            results = sentiment_filtered
-
-        # 按热度排序
-        results.sort(key=lambda x: x.get('hot_score', 0) or 0, reverse=True)
-
-        return results[:max_results]
+        self.db.save_news(
+            news_data.get('domestic', []) + news_data.get('international', [])
+        )
+        
+        # 再次从数据库搜索
+        return self.db.search_news_db(
+            keyword=keyword, category=category if category != 'all' else 'all',
+            fulltext=fulltext, time_range=time_range,
+            source=source, sentiment=sentiment, max_results=max_results
+        )
 
     def get_all_sources(self) -> list:
         """获取所有新闻来源列表"""
-        news_data = self.get_hot_news()
-        sources = set()
-        for category in ['domestic', 'international']:
-            for item in news_data.get(category, []):
-                source = item.get('source', '')
-                if source:
-                    sources.add(source)
-        return sorted(sources)
+        return self.db.get_news_sources()
 
     def get_hot_news(self):
         domestic = []
@@ -655,6 +552,20 @@ class NewsService:
             international = self._parse_rss(international_xml, max_items=10)
         except requests.RequestException:
             international = []
+
+        # 保存到数据库
+        all_news = []
+        for item in domestic:
+            item['_category'] = 'domestic'
+            all_news.append(item)
+        for item in international:
+            item['_category'] = 'international'
+            all_news.append(item)
+        if all_news:
+            try:
+                self.db.save_news(all_news)
+            except Exception as e:
+                print(f"保存新闻到数据库失败: {e}")
 
         return {
             'domestic': domestic,

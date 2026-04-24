@@ -22,6 +22,9 @@ from trend_analyzer import get_trend_analyzer, update_trend_with_news
 from region_analyzer import get_region_analyzer, update_region_with_news
 from deepseek_comment_generator import get_deepseek_generator
 from word_cloud_service import get_word_cloud_service
+from entity_graph import get_entity_graph, get_entity_extractor, process_news_for_graph
+from event_tracker import get_event_tracker
+from entity_miner import get_entity_miner
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 weather_service = WeatherService()
@@ -598,6 +601,305 @@ def api_wordcloud():
         })
     except Exception as e:
         return jsonify(success=False, error=f'获取词云数据失败: {str(e)}'), 500
+
+
+# ==================== 实体关系图谱 ====================
+
+@app.route('/api/entity-graph/data')
+def api_entity_graph_data():
+    """获取实体图谱数据"""
+    try:
+        min_weight = request.args.get('min_weight', '1')
+        min_weight_int = int(min_weight) if min_weight and min_weight.isdigit() else 1
+        
+        graph = get_entity_graph()
+        result = graph.get_full_graph(min_weight_int)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(success=False, error=f'获取图谱数据失败: {str(e)}'), 500
+
+
+@app.route('/api/entity-graph/detail')
+def api_entity_graph_detail():
+    """获取单个实体详情"""
+    try:
+        entity_name = request.args.get('name', '').strip()
+        if not entity_name:
+            return jsonify(success=False, error='请提供实体名称'), 400
+        
+        graph = get_entity_graph()
+        result = graph.get_entity_detail(entity_name)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(success=False, error=f'获取实体详情失败: {str(e)}'), 500
+
+
+@app.route('/api/entity-graph/search')
+def api_entity_graph_search():
+    """搜索实体"""
+    try:
+        keyword = request.args.get('keyword', '').strip()
+        if not keyword:
+            return jsonify(success=False, results=[], total=0), 200
+        
+        graph = get_entity_graph()
+        results = graph.search_entities(keyword)
+        return jsonify({
+            "success": True,
+            "results": results,
+            "total": len(results)
+        })
+    except Exception as e:
+        return jsonify(success=False, error=f'搜索实体失败: {str(e)}'), 500
+
+
+@app.route('/api/entity-graph/statistics')
+def api_entity_graph_statistics():
+    """获取实体图谱统计"""
+    try:
+        graph = get_entity_graph()
+        result = graph.get_entity_statistics()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(success=False, error=f'获取实体统计失败: {str(e)}'), 500
+
+
+@app.route('/api/entity-graph/process', methods=['POST'])
+def api_entity_graph_process():
+    """处理当前新闻更新实体图谱和事件追踪"""
+    try:
+        news_data = news_service.get_hot_news()
+        processed = 0
+        
+        for category in ['domestic', 'international']:
+            if category in news_data:
+                for item in news_data[category]:
+                    try:
+                        process_news_for_graph(item)
+                        processed += 1
+                    except Exception as e:
+                        print(f"处理新闻失败: {e}")
+                        continue
+        
+        return jsonify({
+            "success": True, 
+            "message": f"图谱与事件追踪更新完成，处理了 {processed} 条新闻",
+            "processed": processed
+        })
+    except Exception as e:
+        return jsonify(success=False, error=f'更新图谱失败: {str(e)}'), 500
+
+
+# ==================== 事件追踪 ====================
+
+@app.route('/api/events/list')
+def api_events_list():
+    """获取事件列表"""
+    try:
+        status = request.args.get('status', 'all')
+        limit = request.args.get('limit', '20')
+        limit_int = int(limit) if limit and limit.isdigit() else 20
+        
+        tracker = get_event_tracker()
+        result = tracker.get_event_list(status, limit_int)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(success=False, error=f'获取事件列表失败: {str(e)}'), 500
+
+
+@app.route('/api/events/detail')
+def api_events_detail():
+    """获取事件详情"""
+    try:
+        event_id = request.args.get('event_id', '').strip()
+        if not event_id:
+            return jsonify(success=False, error='请提供事件ID'), 400
+        
+        tracker = get_event_tracker()
+        result = tracker.get_event_detail(event_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(success=False, error=f'获取事件详情失败: {str(e)}'), 500
+
+
+@app.route('/api/events/related')
+def api_events_related():
+    """获取关联事件"""
+    try:
+        event_id = request.args.get('event_id', '').strip()
+        if not event_id:
+            return jsonify(success=False, error='请提供事件ID'), 400
+        
+        tracker = get_event_tracker()
+        result = tracker.get_related_events(event_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(success=False, error=f'获取关联事件失败: {str(e)}'), 500
+
+
+@app.route('/api/events/timeline')
+def api_events_timeline():
+    """获取时间线数据"""
+    try:
+        entity_name = request.args.get('entity', '').strip()
+        event_id = request.args.get('event_id', '').strip()
+        start_date = request.args.get('start_date', '').strip()
+        end_date = request.args.get('end_date', '').strip()
+        
+        tracker = get_event_tracker()
+        result = tracker.get_timeline(
+            entity_name=entity_name if entity_name else None,
+            event_id=event_id if event_id else None,
+            start_date=start_date if start_date else None,
+            end_date=end_date if end_date else None
+        )
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(success=False, error=f'获取时间线数据失败: {str(e)}'), 500
+
+
+@app.route('/api/events/statistics')
+def api_events_statistics():
+    """获取事件统计"""
+    try:
+        tracker = get_event_tracker()
+        result = tracker.get_event_statistics()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(success=False, error=f'获取事件统计失败: {str(e)}'), 500
+
+
+# ==================== 实体深度挖掘 ====================
+
+@app.route('/api/entity-miner/profile')
+def api_entity_miner_profile():
+    """获取实体画像"""
+    try:
+        entity_name = request.args.get('name', '').strip()
+        if not entity_name:
+            return jsonify(success=False, error='请提供实体名称'), 400
+        
+        miner = get_entity_miner()
+        graph = get_entity_graph()
+        tracker = get_event_tracker()
+        
+        # 获取实体图谱详情
+        graph_data = graph.get_entity_detail(entity_name)
+        
+        # 获取实体时间线数据
+        timeline_data = tracker.get_timeline(entity_name=entity_name)
+        
+        result = miner.get_profile(entity_name, graph_data, timeline_data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(success=False, error=f'获取实体画像失败: {str(e)}'), 500
+
+
+@app.route('/api/entity-miner/network')
+def api_entity_miner_network():
+    """获取实体关联网络"""
+    try:
+        entity_name = request.args.get('name', '').strip()
+        if not entity_name:
+            return jsonify(success=False, error='请提供实体名称'), 400
+        
+        # 先构建画像
+        miner = get_entity_miner()
+        graph = get_entity_graph()
+        tracker = get_event_tracker()
+        
+        graph_data = graph.get_entity_detail(entity_name)
+        
+        # 如果实体不存在，先尝试从图谱构建
+        if not graph_data.get('success'):
+            return jsonify(success=False, error='实体不存在，请先更新图谱')
+        
+        timeline_data = tracker.get_timeline(entity_name=entity_name)
+        miner.get_profile(entity_name, graph_data, timeline_data)
+        
+        # 获取关联网络
+        result = miner.get_entity_network(entity_name)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(success=False, error=f'获取关联网络失败: {str(e)}'), 500
+
+
+@app.route('/api/entity-miner/sentiment-trend')
+def api_entity_miner_sentiment():
+    """获取实体情感趋势"""
+    try:
+        entity_name = request.args.get('name', '').strip()
+        if not entity_name:
+            return jsonify(success=False, error='请提供实体名称'), 400
+        
+        miner = get_entity_miner()
+        result = miner.get_entity_sentiment_trend(entity_name)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(success=False, error=f'获取情感趋势失败: {str(e)}'), 500
+
+
+@app.route('/api/entity-miner/news')
+def api_entity_miner_news():
+    """获取实体相关新闻"""
+    try:
+        entity_name = request.args.get('name', '').strip()
+        limit = request.args.get('limit', '20')
+        limit_int = int(limit) if limit and limit.isdigit() else 20
+        
+        if not entity_name:
+            return jsonify(success=False, error='请提供实体名称'), 400
+        
+        miner = get_entity_miner()
+        result = miner.get_entity_news(entity_name, limit_int)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(success=False, error=f'获取实体新闻失败: {str(e)}'), 500
+
+
+@app.route('/api/entity-miner/timeline')
+def api_entity_miner_timeline():
+    """获取实体时间线视图数据"""
+    try:
+        entity_name = request.args.get('name', '').strip()
+        if not entity_name:
+            return jsonify(success=False, error='请提供实体名称'), 400
+        
+        miner = get_entity_miner()
+        result = miner.get_entity_timeline_data(entity_name)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(success=False, error=f'获取时间线数据失败: {str(e)}'), 500
+
+
+@app.route('/api/entity-miner/search')
+def api_entity_miner_search():
+    """搜索缓存实体画像"""
+    try:
+        keyword = request.args.get('keyword', '').strip()
+        if not keyword:
+            return jsonify(success=False, results=[], total=0), 200
+        
+        miner = get_entity_miner()
+        results = miner.search_entity_profiles(keyword)
+        return jsonify({
+            "success": True,
+            "results": results,
+            "total": len(results)
+        })
+    except Exception as e:
+        return jsonify(success=False, error=f'搜索画像失败: {str(e)}'), 500
+
+
+@app.route('/api/entity-miner/statistics')
+def api_entity_miner_statistics():
+    """获取实体挖掘统计"""
+    try:
+        miner = get_entity_miner()
+        result = miner.get_entity_statistics()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify(success=False, error=f'获取统计失败: {str(e)}'), 500
 
 
 def open_browser(url):
