@@ -598,10 +598,196 @@
         </div>
       </article>
     </section>
+    <!-- ==================== 实体关系图谱 ==================== -->
+    <section class="visualization-grid">
+      <article class="visualization-card visualization-card-full">
+        <div class="card-header">
+          <span>🔗 新闻实体关系图谱</span>
+          <span class="card-header-hint">实体关联分析</span>
+        </div>
+        
+        <div class="visualization-controls">
+          <div class="vis-control-row">
+            <div class="entity-tabs">
+              <button class="entity-tab active" data-entity-view="graph">图谱视图</button>
+              <button class="entity-tab" data-entity-view="detail">实体详情</button>
+              <button class="entity-tab" data-entity-view="search">搜索实体</button>
+              <button class="entity-tab" data-entity-view="stats">统计概览</button>
+            </div>
+          </div>
+          <div class="vis-control-row">
+            <button id="updateEntityGraphBtn" class="button button-primary">🔄 更新图谱</button>
+            <select id="entityGraphMinWeight" class="control-input" style="width:140px;">
+              <option value="1">最小权重：1</option>
+              <option value="2">最小权重：2</option>
+              <option value="3">最小权重：3</option>
+            </select>
+            <span class="vis-info" id="entityGraphInfo">点击更新图谱按钮分析当前新闻</span>
+          </div>
+        </div>
+        
+        <div class="entity-view-container">
+          <!-- 图谱视图 -->
+          <div id="entityGraphView" class="entity-view active">
+            <div id="entityGraphCanvas" style="width:100%;height:400px;background:#f8f9fa;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#999;">
+              <div style="text-align:center;">
+                <div style="font-size:48px;margin-bottom:12px;">🔗</div>
+                <p>点击"更新图谱"按钮构建实体关系网络</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 实体详情 -->
+          <div id="entityDetailView" class="entity-view" style="display:none;">
+            <div class="vis-control-row">
+              <input type="text" id="entityDetailName" class="control-input" placeholder="输入实体名称（如：习近平、拜登、联合国）..." style="flex:1;">
+              <button id="entityDetailBtn" class="button button-primary">查询</button>
+            </div>
+            <div id="entityDetailResult" class="entity-detail-result">
+              <div class="no-results">输入实体名称查询详情</div>
+            </div>
+          </div>
+          
+          <!-- 搜索实体 -->
+          <div id="entitySearchView" class="entity-view" style="display:none;">
+            <div class="vis-control-row">
+              <input type="text" id="entitySearchInput" class="control-input" placeholder="搜索实体..." style="flex:1;">
+              <button id="entitySearchBtn" class="button button-primary">搜索</button>
+            </div>
+            <div id="entitySearchResult" class="entity-search-result">
+              <div class="no-results">输入关键词搜索实体</div>
+            </div>
+          </div>
+          
+          <!-- 统计概览 -->
+          <div id="entityStatsView" class="entity-view" style="display:none;">
+            <div id="entityStatsLoading">加载统计信息...</div>
+            <div id="entityStatsContent" style="display:none;"></div>
+          </div>
+        </div>
+        
+        <div class="entity-stats" id="entityGraphStats"></div>
+      </article>
+    </section>
+
+    <!-- ==================== 事件追踪 ==================== -->
+    <section class="visualization-grid">
+      <article class="visualization-card">
+        <div class="card-header">
+          <span>📊 事件追踪与关联</span>
+          <span class="card-header-hint">事件聚类分析</span>
+        </div>
+        
+        <div class="visualization-controls">
+          <div class="vis-control-row">
+            <select id="eventStatusFilter" class="control-input">
+              <option value="all">所有事件</option>
+              <option value="emerging">萌芽期</option>
+              <option value="active">发展期</option>
+              <option value="declining">衰退期</option>
+            </select>
+            <button id="refreshEventsBtn" class="button button-secondary">刷新</button>
+          </div>
+          <div class="vis-control-row">
+            <span class="vis-info" id="eventListInfo">点击"更新图谱"后自动生成事件</span>
+          </div>
+        </div>
+        
+        <div id="eventListContainer">
+          <div class="no-results" id="eventNoResults">暂无事件数据</div>
+          <div id="eventList" style="display:none;"></div>
+        </div>
+        
+        <div id="eventDetailModal" style="display:none;"></div>
+      </article>
+      
+      <!-- 时间线视图 -->
+      <article class="visualization-card">
+        <div class="card-header">
+          <span>📅 新闻时间线</span>
+          <span class="card-header-hint">按时间浏览</span>
+        </div>
+        
+        <div class="visualization-controls">
+          <div class="vis-control-row">
+            <input type="text" id="timelineEntityInput" class="control-input" placeholder="按实体筛选（可选）..." style="flex:1;">
+            <input type="text" id="timelineEventInput" class="control-input" placeholder="事件ID（可选）..." style="width:120px;">
+            <input type="date" id="timelineStartDate" class="control-input" style="width:140px;">
+            <input type="date" id="timelineEndDate" class="control-input" style="width:140px;">
+            <button id="refreshTimelineBtn" class="button button-secondary">刷新</button>
+          </div>
+          <div class="vis-control-row">
+            <span class="vis-info" id="timelineInfo">设置筛选条件后点击刷新</span>
+          </div>
+        </div>
+        
+        <div id="timelineContainer">
+          <div id="timelineContent">
+            <div class="no-results">暂无时间线数据</div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ==================== 实体深度挖掘 ==================== -->
+    <section class="visualization-grid">
+      <article class="visualization-card visualization-card-full">
+        <div class="card-header">
+          <span>🔍 实体深度挖掘</span>
+          <span class="card-header-hint">画像 · 网络 · 趋势</span>
+        </div>
+        
+        <div class="visualization-controls">
+          <div class="vis-control-row">
+            <input type="text" id="minerEntityName" class="control-input" placeholder="输入实体名进行深度挖掘（如：习近平、拜登、华为）..." style="flex:1;">
+            <button id="minerAnalyzeBtn" class="button button-primary">深度分析</button>
+          </div>
+        </div>
+        
+        <div class="miner-tabs">
+          <button class="miner-tab active" data-miner-view="profile">实体画像</button>
+          <button class="miner-tab" data-miner-view="network">关联网络</button>
+          <button class="miner-tab" data-miner-view="sentiment">情感趋势</button>
+          <button class="miner-tab" data-miner-view="newslist">相关新闻</button>
+        </div>
+        
+        <!-- 实体画像 -->
+        <div id="minerProfileView" class="miner-view active">
+          <div id="minerProfileContent">
+            <div class="no-results">输入实体名称并点击"深度分析"</div>
+          </div>
+        </div>
+        
+        <!-- 关联网络 -->
+        <div id="minerNetworkView" class="miner-view" style="display:none;">
+          <div id="minerNetworkCanvas" style="width:100%;height:350px;background:#f8f9fa;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#999;">
+            <div style="text-align:center;">
+              <div style="font-size:36px;margin-bottom:8px;">🌐</div>
+              <p>深度分析后显示关联网络</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 情感趋势 -->
+        <div id="minerSentimentView" class="miner-view" style="display:none;">
+          <div class="chart-container" style="height:300px;">
+            <div id="minerSentimentLoading">加载情感趋势...</div>
+            <canvas id="minerSentimentChart" style="display:none;"></canvas>
+          </div>
+        </div>
+        
+        <!-- 相关新闻 -->
+        <div id="minerNewsListView" class="miner-view" style="display:none;">
+          <div id="minerNewsListContent">
+            <div class="no-results">深度分析后显示相关新闻</div>
+          </div>
+        </div>
+      </article>
+    </section>
   </main>
 
   <footer class="site-footer">
-    <p>智能新闻工作台 · 本地运行 · AI驱动</p>
+    <p>智能新闻工作台 · 本地运行 · AI驱动 · 实体关系图谱 · 事件追踪 · 深度挖掘</p>
   </footer>
 
   <script>
@@ -2599,6 +2785,1222 @@ function initMapView() {
         updateCommentNewsSelect();
       }, 100);
     };
+
+    // ==================== 实体关系图谱 ====================
+    // 实体视图切换
+    document.querySelectorAll('.entity-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.entity-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        document.querySelectorAll('.entity-view').forEach(v => v.style.display = 'none');
+        const viewId = this.dataset.entityView;
+        document.getElementById(`entity${viewId.charAt(0).toUpperCase() + viewId.slice(1)}View`).style.display = 'block';
+      });
+    });
+
+    // 更新图谱
+    document.getElementById('updateEntityGraphBtn').addEventListener('click', async function() {
+      const info = document.getElementById('entityGraphInfo');
+      const btn = this;
+      btn.disabled = true;
+      info.textContent = '正在分析新闻并构建实体图谱...';
+      
+      try {
+        const response = await fetch('/api/entity-graph/process', { method: 'POST' });
+        const data = await response.json();
+        if (data.success) {
+          info.textContent = data.message || '图谱更新完成';
+          // 加载图谱数据
+          await loadEntityGraphData();
+          // 加载事件列表
+          await loadEventList();
+        } else {
+          info.textContent = '更新失败: ' + (data.error || '未知错误');
+        }
+      } catch (error) {
+        info.textContent = '请求失败: ' + error.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // 最小权重切换
+    document.getElementById('entityGraphMinWeight').addEventListener('change', loadEntityGraphData);
+
+    async function loadEntityGraphData() {
+      const canvas = document.getElementById('entityGraphCanvas');
+      const minWeight = document.getElementById('entityGraphMinWeight').value;
+      const info = document.getElementById('entityGraphInfo');
+      const stats = document.getElementById('entityGraphStats');
+      
+      try {
+        canvas.innerHTML = '<div style="text-align:center;padding:40px;"><div class="loading-spinner" style="margin:0 auto;"></div><p style="margin-top:12px;color:#6b7280;">加载图谱数据...</p></div>';
+        
+        const response = await fetch(`/api/entity-graph/data?min_weight=${minWeight}`);
+        const data = await response.json();
+        
+        if (data.success && data.nodes && data.nodes.length > 0) {
+          renderEntityGraph(canvas, data);
+          stats.innerHTML = `<span>实体: ${data.node_count}个 | 关系: ${data.edge_count}条</span>`;
+          info.textContent = `图谱加载成功 (${data.last_update || '刚刚更新'})`;
+        } else {
+          canvas.innerHTML = '<div style="text-align:center;padding:40px;color:#999;"><div style="font-size:48px;margin-bottom:12px;">🔗</div><p>暂无实体数据，请先点击"更新图谱"</p></div>';
+          stats.innerHTML = '';
+          info.textContent = '暂无实体数据';
+        }
+      } catch (error) {
+        canvas.innerHTML = `<div style="text-align:center;padding:40px;color:#ef4444;">加载失败: ${error.message}</div>`;
+        info.textContent = '加载失败';
+      }
+    }
+
+    function renderEntityGraph(container, graphData) {
+      const { nodes, edges } = graphData;
+      if (!nodes || nodes.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">暂无实体数据</div>';
+        return;
+      }
+      
+      // 使用Canvas绘制简单的力导向图
+      const width = container.clientWidth || 800;
+      const height = 400;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      
+      container.innerHTML = '';
+      container.style.position = 'relative';
+      container.style.overflow = 'hidden';
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+      container.appendChild(canvas);
+      
+      const ctx = canvas.getContext('2d');
+      
+      // 初始化节点位置
+      const nodePositions = {};
+      const angleStep = (2 * Math.PI) / nodes.length;
+      nodes.forEach((node, i) => {
+        const angle = angleStep * i - Math.PI / 2;
+        const radius = Math.min(width, height) * 0.35;
+        nodePositions[node.id] = {
+          x: centerX + radius * Math.cos(angle),
+          y: centerY + radius * Math.sin(angle),
+          vx: 0,
+          vy: 0,
+          ...node
+        };
+      });
+      
+      // 力导向布局
+      const iterations = 50;
+      const repulsion = 5000;
+      const attraction = 0.01;
+      const damping = 0.9;
+      
+      for (let iter = 0; iter < iterations; iter++) {
+        // 排斥力
+        const ids = Object.keys(nodePositions);
+        for (let i = 0; i < ids.length; i++) {
+          for (let j = i + 1; j < ids.length; j++) {
+            const a = nodePositions[ids[i]];
+            const b = nodePositions[ids[j]];
+            const dx = a.x - b.x;
+            const dy = a.y - b.y;
+            const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+            const force = repulsion / (dist * dist);
+            const fx = (dx / dist) * force;
+            const fy = (dy / dist) * force;
+            a.vx += fx;
+            a.vy += fy;
+            b.vx -= fx;
+            b.vy -= fy;
+          }
+        }
+        
+        // 吸引力（边的两端）
+        for (const edge of edges) {
+          const source = nodePositions[edge.source];
+          const target = nodePositions[edge.target];
+          if (source && target) {
+            const dx = target.x - source.x;
+            const dy = target.y - source.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const force = dist * attraction;
+            const fx = (dx / Math.max(dist, 1)) * force;
+            const fy = (dy / Math.max(dist, 1)) * force;
+            source.vx += fx;
+            source.vy += fy;
+            target.vx -= fx;
+            target.vy -= fy;
+          }
+        }
+        
+        // 向中心引力
+        for (const id of ids) {
+          const node = nodePositions[id];
+          node.vx += (centerX - node.x) * 0.001;
+          node.vy += (centerY - node.y) * 0.001;
+        }
+        
+        // 更新位置
+        for (const id of ids) {
+          const node = nodePositions[id];
+          node.vx *= damping;
+          node.vy *= damping;
+          node.x += node.vx;
+          node.y += node.vy;
+          // 边界约束
+          node.x = Math.max(20, Math.min(width - 20, node.x));
+          node.y = Math.max(20, Math.min(height - 20, node.y));
+        }
+      }
+      
+      // 绘制
+      function draw() {
+        ctx.clearRect(0, 0, width, height);
+        
+        // 绘制边
+        for (const edge of edges) {
+          const source = nodePositions[edge.source];
+          const target = nodePositions[edge.target];
+          if (source && target) {
+            ctx.beginPath();
+            ctx.moveTo(source.x, source.y);
+            ctx.lineTo(target.x, target.y);
+            ctx.strokeStyle = 'rgba(59, 130, 246, 0.3)';
+            ctx.lineWidth = Math.min(3, edge.weight || 1);
+            ctx.stroke();
+          }
+        }
+        
+        // 绘制节点
+        for (const id of Object.keys(nodePositions)) {
+          const node = nodePositions[id];
+          const size = node.size || 15;
+          
+          // 节点颜色
+          let color = '#3b82f6';
+          if (node.type === 'person') color = '#ef4444';
+          else if (node.type === 'country') color = '#10b981';
+          else if (node.type === 'organization') color = '#8b5cf6';
+          else if (node.type === 'event') color = '#f59e0b';
+          
+          // 阴影
+          ctx.shadowColor = 'rgba(0,0,0,0.15)';
+          ctx.shadowBlur = 8;
+          
+          // 圆形
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
+          ctx.fillStyle = color;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          
+          // 文字
+          ctx.fillStyle = '#1e293b';
+          ctx.font = '12px Microsoft YaHei, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          // 截断长文本
+          let label = node.label || id;
+          if (label.length > 6) label = label.substring(0, 5) + '..';
+          ctx.fillText(label, node.x, node.y + size + 14);
+        }
+        
+        // 图例
+        const legendY = 20;
+        const legendItems = [
+          { label: '人物', color: '#ef4444' },
+          { label: '地点', color: '#10b981' },
+          { label: '组织', color: '#8b5cf6' },
+          { label: '事件', color: '#f59e0b' }
+        ];
+        legendItems.forEach((item, i) => {
+          const x = 20 + i * 100;
+          ctx.beginPath();
+          ctx.arc(x, legendY, 6, 0, 2 * Math.PI);
+          ctx.fillStyle = item.color;
+          ctx.fill();
+          ctx.fillStyle = '#475569';
+          ctx.font = '11px Microsoft YaHei, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(item.label, x + 12, legendY);
+        });
+      }
+      
+      draw();
+      
+      // 鼠标悬停交互
+      let hoveredNode = null;
+      canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        
+        hoveredNode = null;
+        for (const id of Object.keys(nodePositions)) {
+          const node = nodePositions[id];
+          const dx = mx - node.x;
+          const dy = my - node.y;
+          if (dx * dx + dy * dy < (node.size + 5) ** 2) {
+            hoveredNode = node;
+            break;
+          }
+        }
+        
+        canvas.style.cursor = hoveredNode ? 'pointer' : 'default';
+        
+        // 重新绘制并在悬停时高亮
+        draw();
+        if (hoveredNode) {
+          ctx.beginPath();
+          ctx.arc(hoveredNode.x, hoveredNode.y, hoveredNode.size + 4, 0, 2 * Math.PI);
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 3;
+          ctx.setLineDash([4, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          
+          // 显示全名
+          ctx.fillStyle = '#1e293b';
+          ctx.font = 'bold 13px Microsoft YaHei, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#1e293b';
+          ctx.fillText(hoveredNode.label || hoveredNode.id, hoveredNode.x, hoveredNode.y - hoveredNode.size - 10);
+        }
+      });
+      
+      canvas.addEventListener('click', (e) => {
+        if (hoveredNode) {
+          // 跳转到实体详情
+          document.getElementById('entityDetailName').value = hoveredNode.label || hoveredNode.id;
+          document.getElementById('entityDetailBtn').click();
+          // 切换到详情视图
+          document.querySelector('.entity-tab[data-entity-view="detail"]').click();
+        }
+      });
+    }
+
+    // 实体详情查询
+    document.getElementById('entityDetailBtn').addEventListener('click', async function() {
+      const name = document.getElementById('entityDetailName').value.trim();
+      const resultDiv = document.getElementById('entityDetailResult');
+      
+      if (!name) {
+        resultDiv.innerHTML = '<div class="no-results" style="color:#ef4444;">请输入实体名称</div>';
+        return;
+      }
+      
+      resultDiv.innerHTML = '<div class="no-results">查询中...</div>';
+      
+      try {
+        const response = await fetch(`/api/entity-graph/detail?name=${encodeURIComponent(name)}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          const entity = data.entity;
+          let html = `
+            <div class="entity-detail-card">
+              <div class="entity-detail-header">
+                <span class="entity-detail-name">${entity.name}</span>
+                <span class="entity-detail-type entity-type-${entity.type}">${getEntityTypeLabel(entity.type)}</span>
+              </div>
+              <div class="entity-detail-stats">
+                <div class="stat-item"><span class="stat-label">出现次数</span><span class="stat-value">${entity.count}次</span></div>
+                <div class="stat-item"><span class="stat-label">关联实体</span><span class="stat-value">${data.relation_count}个</span></div>
+                <div class="stat-item"><span class="stat-label">首次出现</span><span class="stat-value">${entity.first_seen || '未知'}</span></div>
+                <div class="stat-item"><span class="stat-label">最近出现</span><span class="stat-value">${entity.last_seen || '未知'}</span></div>
+              </div>
+              ${entity.properties && entity.properties.position ? `<div class="entity-detail-props"><span class="stat-label">职务：</span>${entity.properties.position}</div>` : ''}
+            </div>
+          `;
+          
+          if (data.related_entities && data.related_entities.length > 0) {
+            html += '<div class="entity-related-title">关联实体：</div><div class="entity-related-list">';
+            data.related_entities.forEach(rel => {
+              html += `<div class="entity-related-item" data-entity="${rel.entity}">
+                <span class="entity-related-name">${rel.entity}</span>
+                <span class="entity-related-type entity-type-${rel.type}">${getEntityTypeLabel(rel.type)}</span>
+                <span class="entity-related-weight">关联强度: ${rel.weight}</span>
+              </div>`;
+            });
+            html += '</div>';
+          } else {
+            html += '<div class="no-results">暂无关联实体</div>';
+          }
+          
+          resultDiv.innerHTML = html;
+          
+          // 点击关联实体查询
+          resultDiv.querySelectorAll('.entity-related-item').forEach(item => {
+            item.addEventListener('click', () => {
+              document.getElementById('entityDetailName').value = item.dataset.entity;
+              document.getElementById('entityDetailBtn').click();
+            });
+          });
+        } else {
+          resultDiv.innerHTML = `<div class="no-results" style="color:#ef4444;">${data.error || '实体不存在'}</div>`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="no-results" style="color:#ef4444;">查询失败: ${error.message}</div>`;
+      }
+    });
+
+    // 实体搜索
+    document.getElementById('entitySearchBtn').addEventListener('click', async function() {
+      const keyword = document.getElementById('entitySearchInput').value.trim();
+      const resultDiv = document.getElementById('entitySearchResult');
+      
+      if (!keyword) {
+        resultDiv.innerHTML = '<div class="no-results">请输入搜索关键词</div>';
+        return;
+      }
+      
+      resultDiv.innerHTML = '<div class="no-results">搜索中...</div>';
+      
+      try {
+        const response = await fetch(`/api/entity-graph/search?keyword=${encodeURIComponent(keyword)}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          if (data.results.length === 0) {
+            resultDiv.innerHTML = '<div class="no-results">未找到匹配的实体</div>';
+          } else {
+            let html = `<div class="entity-search-count">找到 ${data.total} 个实体</div><div class="entity-related-list">`;
+            data.results.forEach(entity => {
+              html += `<div class="entity-related-item" data-entity="${entity.name}">
+                <span class="entity-related-name">${entity.name}</span>
+                <span class="entity-related-type entity-type-${entity.type}">${getEntityTypeLabel(entity.type)}</span>
+                <span class="entity-related-weight">出现 ${entity.count} 次</span>
+              </div>`;
+            });
+            html += '</div>';
+            resultDiv.innerHTML = html;
+            
+            resultDiv.querySelectorAll('.entity-related-item').forEach(item => {
+              item.addEventListener('click', () => {
+                document.getElementById('entityDetailName').value = item.dataset.entity;
+                document.getElementById('entityDetailBtn').click();
+                document.querySelector('.entity-tab[data-entity-view="detail"]').click();
+              });
+            });
+          }
+        } else {
+          resultDiv.innerHTML = `<div class="no-results" style="color:#ef4444;">搜索失败</div>`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="no-results" style="color:#ef4444;">搜索失败: ${error.message}</div>`;
+      }
+    });
+
+    // 实体搜索回车
+    document.getElementById('entitySearchInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('entitySearchBtn').click();
+    });
+    document.getElementById('entityDetailName').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('entityDetailBtn').click();
+    });
+
+    function getEntityTypeLabel(type) {
+      const labels = { 'person': '人物', 'country': '地点', 'organization': '组织', 'event': '事件' };
+      return labels[type] || type;
+    }
+
+    // 加载实体统计
+    document.querySelector('.entity-tab[data-entity-view="stats"]').addEventListener('click', async function() {
+      const loading = document.getElementById('entityStatsLoading');
+      const content = document.getElementById('entityStatsContent');
+      
+      loading.style.display = 'block';
+      content.style.display = 'none';
+      
+      try {
+        const response = await fetch('/api/entity-graph/statistics');
+        const data = await response.json();
+        
+        loading.style.display = 'none';
+        if (data.success && data.statistics) {
+          const stats = data.statistics;
+          let html = '<div class="entity-detail-card">';
+          html += `<div class="entity-detail-stats">
+            <div class="stat-item"><span class="stat-label">实体总数</span><span class="stat-value">${stats.total_entities}</span></div>
+            <div class="stat-item"><span class="stat-label">关系总数</span><span class="stat-value">${stats.total_relations}</span></div>
+          </div>`;
+          
+          if (stats.type_distribution) {
+            html += '<div class="entity-related-title">类型分布：</div><div class="entity-related-list">';
+            for (const [type, count] of Object.entries(stats.type_distribution)) {
+              html += `<div class="entity-related-item"><span class="entity-related-name">${getEntityTypeLabel(type)}</span><span class="entity-related-weight">${count}个</span></div>`;
+            }
+            html += '</div>';
+          }
+          
+          if (stats.top_entities && stats.top_entities.length > 0) {
+            html += '<div class="entity-related-title">高频实体 TOP10：</div><div class="entity-related-list">';
+            stats.top_entities.forEach((e, i) => {
+              html += `<div class="entity-related-item" data-entity="${e.name}">
+                <span class="entity-related-name">${i+1}. ${e.name}</span>
+                <span class="entity-related-type entity-type-${e.type}">${getEntityTypeLabel(e.type)}</span>
+                <span class="entity-related-weight">${e.count}次</span>
+              </div>`;
+            });
+            html += '</div>';
+          }
+          
+          html += '</div>';
+          content.innerHTML = html;
+          content.style.display = 'block';
+          
+          content.querySelectorAll('.entity-related-item[data-entity]').forEach(item => {
+            item.addEventListener('click', () => {
+              document.getElementById('entityDetailName').value = item.dataset.entity;
+              document.getElementById('entityDetailBtn').click();
+              document.querySelector('.entity-tab[data-entity-view="detail"]').click();
+            });
+          });
+        } else {
+          content.innerHTML = '<div class="no-results">暂无统计数据</div>';
+          content.style.display = 'block';
+        }
+      } catch (error) {
+        loading.style.display = 'none';
+        content.innerHTML = `<div class="no-results" style="color:#ef4444;">加载失败: ${error.message}</div>`;
+        content.style.display = 'block';
+      }
+    });
+
+    // ==================== 事件追踪 ====================
+    document.getElementById('refreshEventsBtn').addEventListener('click', loadEventList);
+    document.getElementById('eventStatusFilter').addEventListener('change', loadEventList);
+
+    async function loadEventList() {
+      const status = document.getElementById('eventStatusFilter').value;
+      const container = document.getElementById('eventList');
+      const noResults = document.getElementById('eventNoResults');
+      const info = document.getElementById('eventListInfo');
+      
+      info.textContent = '加载事件数据...';
+      
+      try {
+        const response = await fetch(`/api/events/list?status=${status}&limit=30`);
+        const data = await response.json();
+        
+        if (data.success && data.events && data.events.length > 0) {
+          noResults.style.display = 'none';
+          container.style.display = 'block';
+          info.textContent = `共 ${data.total} 个事件 (${data.status_filter === 'all' ? '全部' : data.status_filter})`;
+          
+          container.innerHTML = data.events.map(event => `
+            <div class="event-card" data-event-id="${event.id}">
+              <div class="event-card-header">
+                <span class="event-summary">${event.summary.substring(0, 60)}${event.summary.length > 60 ? '...' : ''}</span>
+                <span class="event-status event-status-${event.status}">${event.status_label}</span>
+              </div>
+              <div class="event-card-meta">
+                <span>📰 ${event.news_count}篇</span>
+                <span>🏷️ ${(event.keywords || []).slice(0, 3).join(', ')}</span>
+                <span>🕐 ${event.last_updated ? event.last_updated.substring(0, 10) : ''}</span>
+              </div>
+              ${event.entities && event.entities.length > 0 ? `<div class="event-card-entities">${event.entities.slice(0, 5).map(e => `<span class="event-entity-tag">${e}</span>`).join('')}</div>` : ''}
+              <div class="event-card-actions">
+                <button class="button button-secondary button-small view-event-detail" data-event-id="${event.id}">查看详情</button>
+                <button class="button button-secondary button-small view-event-related" data-event-id="${event.id}">关联事件</button>
+                <button class="button button-secondary button-small view-event-timeline" data-event-id="${event.id}">时间线</button>
+              </div>
+            </div>
+          `).join('');
+          
+          // 查看详情
+          container.querySelectorAll('.view-event-detail').forEach(btn => {
+            btn.addEventListener('click', showEventDetail);
+          });
+          container.querySelectorAll('.view-event-related').forEach(btn => {
+            btn.addEventListener('click', showEventRelated);
+          });
+          container.querySelectorAll('.view-event-timeline').forEach(btn => {
+            btn.addEventListener('click', () => {
+              document.getElementById('timelineEventInput').value = btn.dataset.eventId;
+              document.getElementById('refreshTimelineBtn').click();
+            });
+          });
+        } else {
+          noResults.style.display = 'block';
+          container.style.display = 'none';
+          info.textContent = '暂无事件数据，请先更新图谱';
+        }
+      } catch (error) {
+        info.textContent = '加载失败: ' + error.message;
+      }
+    }
+
+    async function showEventDetail(e) {
+      const eventId = e.currentTarget.dataset.eventId;
+      const modal = document.getElementById('eventDetailModal');
+      
+      modal.style.display = 'block';
+      modal.innerHTML = '<div class="event-detail-loading">加载事件详情...</div>';
+      
+      try {
+        const response = await fetch(`/api/events/detail?event_id=${eventId}`);
+        const data = await response.json();
+        
+        if (data.success && data.event) {
+          const event = data.event;
+          let html = `
+            <div class="event-detail-overlay" onclick="document.getElementById('eventDetailModal').style.display='none'"></div>
+            <div class="event-detail-panel">
+              <div class="event-detail-close" onclick="document.getElementById('eventDetailModal').style.display='none'">✕</div>
+              <h3>${event.summary}</h3>
+              <div class="event-detail-info">
+                <span class="event-status event-status-${event.status}">${event.status_label}</span>
+                <span>📰 ${event.news_count}篇新闻</span>
+                <span>🆔 ${event.id}</span>
+                <span>📅 ${event.created ? event.created.substring(0, 10) : ''} ~ ${event.last_updated ? event.last_updated.substring(0, 10) : ''}</span>
+              </div>
+              <div class="event-detail-section">
+                <h4>🏷️ 关键词</h4>
+                <div>${(event.keywords || []).map(k => `<span class="event-keyword-tag">${k}</span>`).join('')}</div>
+              </div>
+              <div class="event-detail-section">
+                <h4>🔗 涉及实体</h4>
+                <div>${(event.entities || []).map(e => `<span class="event-entity-tag">${e}</span>`).join('')}</div>
+              </div>
+              <div class="event-detail-section">
+                <h4>📰 相关新闻 (${event.news.length}篇)</h4>
+                <div class="event-news-list">
+                  ${event.news.slice(0, 10).map(n => `
+                    <div class="event-news-item">
+                      <a href="${n.link || '#'}" target="_blank">${n.title}</a>
+                      <div class="event-news-meta">
+                        <span>${n.source || '未知'}</span>
+                        <span>${n.published ? n.published.substring(0, 10) : ''}</span>
+                        ${n.sentiment ? `<span class="sentiment-${n.sentiment}">${n.sentiment}</span>` : ''}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          `;
+          modal.innerHTML = html;
+        } else {
+          modal.innerHTML = `<div class="no-results" style="color:#ef4444;">${data.error || '事件不存在'}</div>`;
+        }
+      } catch (error) {
+        modal.innerHTML = `<div class="no-results" style="color:#ef4444;">加载失败: ${error.message}</div>`;
+      }
+    }
+
+    async function showEventRelated(e) {
+      const eventId = e.currentTarget.dataset.eventId;
+      const modal = document.getElementById('eventDetailModal');
+      
+      modal.style.display = 'block';
+      modal.innerHTML = '<div class="event-detail-loading">加载关联事件...</div>';
+      
+      try {
+        const response = await fetch(`/api/events/related?event_id=${eventId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          let html = `
+            <div class="event-detail-overlay" onclick="document.getElementById('eventDetailModal').style.display='none'"></div>
+            <div class="event-detail-panel">
+              <div class="event-detail-close" onclick="document.getElementById('eventDetailModal').style.display='none'">✕</div>
+              <h3>关联事件分析</h3>
+              <p style="color:#6b7280;margin:0 0 16px;">事件ID: ${eventId}</p>
+          `;
+          
+          if (data.related_events && data.related_events.length > 0) {
+            html += `<p>找到 ${data.count} 个关联事件</p><div class="related-events-list">`;
+            data.related_events.forEach(rel => {
+              html += `
+                <div class="related-event-card">
+                  <div class="related-event-summary">${rel.summary.substring(0, 50)}...</div>
+                  <div class="related-event-meta">
+                    <span>📰 ${rel.news_count}篇</span>
+                    <span class="event-status event-status-${rel.status}">${rel.status_label}</span>
+                    <span>关联度: ${rel.relevance_score}</span>
+                  </div>
+                  ${rel.shared_entities && rel.shared_entities.length > 0 ? `<div class="related-event-entities">共享实体: ${rel.shared_entities.map(e => `<span class="event-entity-tag">${e}</span>`).join('')}</div>` : ''}
+                </div>
+              `;
+            });
+            html += '</div>';
+          } else {
+            html += '<div class="no-results">未发现关联事件</div>';
+          }
+          
+          html += '</div>';
+          modal.innerHTML = html;
+        } else {
+          modal.innerHTML = `<div class="no-results" style="color:#ef4444;">${data.error || '查询失败'}</div>`;
+        }
+      } catch (error) {
+        modal.innerHTML = `<div class="no-results" style="color:#ef4444;">加载失败: ${error.message}</div>`;
+      }
+    }
+
+    // ==================== 时间线视图 ====================
+    document.getElementById('refreshTimelineBtn').addEventListener('click', async function() {
+      const entity = document.getElementById('timelineEntityInput').value.trim();
+      const eventId = document.getElementById('timelineEventInput').value.trim();
+      const startDate = document.getElementById('timelineStartDate').value;
+      const endDate = document.getElementById('timelineEndDate').value;
+      const content = document.getElementById('timelineContent');
+      const info = document.getElementById('timelineInfo');
+      
+      info.textContent = '加载时间线数据...';
+      content.innerHTML = '<div class="no-results">加载中...</div>';
+      
+      try {
+        let url = '/api/events/timeline?';
+        const params = [];
+        if (entity) params.push(`entity=${encodeURIComponent(entity)}`);
+        if (eventId) params.push(`event_id=${encodeURIComponent(eventId)}`);
+        if (startDate) params.push(`start_date=${encodeURIComponent(startDate)}`);
+        if (endDate) params.push(`end_date=${encodeURIComponent(endDate)}`);
+        url += params.join('&');
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.success && data.timeline && Object.keys(data.timeline).length > 0) {
+          info.textContent = `共 ${data.total_items} 条记录 (${Object.keys(data.timeline).length} 个日期)`;
+          
+          let html = '<div class="timeline-list">';
+          for (const [date, items] of Object.entries(data.timeline)) {
+            html += `
+              <div class="timeline-date-group">
+                <div class="timeline-date-header">
+                  <span class="timeline-date-badge">📅 ${date}</span>
+                  <span class="timeline-date-count">${items.length}条</span>
+                </div>
+                <div class="timeline-items">
+                  ${items.map(item => {
+                    const sentimentColors = { positive: '#10b981', negative: '#ef4444', neutral: '#6b7280' };
+                    return `
+                      <div class="timeline-item">
+                        <div class="timeline-item-indicator" style="background:${sentimentColors[item.sentiment] || '#6b7280'}"></div>
+                        <div class="timeline-item-content">
+                          <a href="${item.link || '#'}" target="_blank" class="timeline-item-title">${item.title}</a>
+                          <div class="timeline-item-meta">
+                            <span>${item.source || '未知来源'}</span>
+                            ${item.event_summary ? `<span class="timeline-event-ref">事件: ${item.event_summary.substring(0, 30)}...</span>` : ''}
+                            ${item.entities && item.entities.length > 0 ? `<span class="timeline-entities">${item.entities.map(e => `<span class="event-entity-tag">${e}</span>`).join('')}</span>` : ''}
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            `;
+          }
+          html += '</div>';
+          content.innerHTML = html;
+        } else {
+          info.textContent = '暂无时间线数据';
+          content.innerHTML = '<div class="no-results">暂无时间线数据</div>';
+        }
+      } catch (error) {
+        info.textContent = '加载失败: ' + error.message;
+        content.innerHTML = `<div class="no-results" style="color:#ef4444;">加载失败: ${error.message}</div>`;
+      }
+    });
+
+    // ==================== 实体深度挖掘 ====================
+    // Miner视图切换
+    document.querySelectorAll('.miner-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.miner-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        document.querySelectorAll('.miner-view').forEach(v => v.style.display = 'none');
+        const viewId = this.dataset.minerView;
+        document.getElementById(`miner${viewId.charAt(0).toUpperCase() + viewId.slice(1)}View`).style.display = 'block';
+      });
+    });
+
+    document.getElementById('minerAnalyzeBtn').addEventListener('click', async function() {
+      const name = document.getElementById('minerEntityName').value.trim();
+      if (!name) {
+        document.getElementById('minerProfileContent').innerHTML = '<div class="no-results" style="color:#ef4444;">请输入实体名称</div>';
+        return;
+      }
+      
+      // 显示加载状态
+      document.getElementById('minerProfileContent').innerHTML = '<div class="no-results">正在深度分析实体...</div>';
+      document.getElementById('minerNetworkCanvas').innerHTML = '<div style="text-align:center;padding:40px;color:#6b7280;">分析中...</div>';
+      
+      try {
+        // 并发获取画像、关联网络、情感趋势、相关新闻
+        const [profileRes, networkRes, sentimentRes, newsRes] = await Promise.all([
+          fetch(`/api/entity-miner/profile?name=${encodeURIComponent(name)}`),
+          fetch(`/api/entity-miner/network?name=${encodeURIComponent(name)}`),
+          fetch(`/api/entity-miner/sentiment-trend?name=${encodeURIComponent(name)}`),
+          fetch(`/api/entity-miner/news?name=${encodeURIComponent(name)}&limit=20`)
+        ]);
+        
+        const profile = await profileRes.json();
+        const network = await networkRes.json();
+        const sentiment = await sentimentRes.json();
+        const news = await newsRes.json();
+        
+        // 渲染画像
+        if (profile.success) {
+          renderMinerProfile(profile.profile);
+        } else {
+          document.getElementById('minerProfileContent').innerHTML = `<div class="no-results" style="color:#ef4444;">${profile.error || '分析失败'}</div>`;
+        }
+        
+        // 渲染网络
+        if (network.success) {
+          renderMinerNetwork(network.network);
+        } else {
+          document.getElementById('minerNetworkCanvas').innerHTML = `<div style="text-align:center;padding:40px;color:#ef4444;">${network.error || '网络数据不可用'}</div>`;
+        }
+        
+        // 渲染情感趋势
+        if (sentiment.success) {
+          renderMinerSentiment(sentiment);
+        }
+        
+        // 渲染相关新闻
+        if (news.success) {
+          renderMinerNews(news);
+        } else {
+          document.getElementById('minerNewsListContent').innerHTML = `<div class="no-results" style="color:#ef4444;">${news.error || '新闻数据不可用'}</div>`;
+        }
+        
+        // 切换到画像视图
+        document.querySelector('.miner-tab[data-miner-view="profile"]').click();
+        
+      } catch (error) {
+        document.getElementById('minerProfileContent').innerHTML = `<div class="no-results" style="color:#ef4444;">分析失败: ${error.message}</div>`;
+      }
+    });
+
+    function renderMinerProfile(profileData) {
+      const content = document.getElementById('minerProfileContent');
+      
+      let html = `
+        <div class="entity-detail-card">
+          <div class="entity-detail-header">
+            <span class="entity-detail-name entity-detail-name-large">${profileData.name}</span>
+            <span class="entity-detail-type entity-type-${profileData.type}">${getEntityTypeLabel(profileData.type)}</span>
+          </div>
+          <div class="entity-detail-stats entity-detail-stats-grid">
+            <div class="stat-item"><span class="stat-label">相关新闻</span><span class="stat-value">${profileData.total_news}篇</span></div>
+            <div class="stat-item"><span class="stat-label">关联实体</span><span class="stat-value">${profileData.total_relations}个</span></div>
+            <div class="stat-item"><span class="stat-label">首次出现</span><span class="stat-value">${(profileData.first_seen || '').substring(0, 10)}</span></div>
+            <div class="stat-item"><span class="stat-label">最近更新</span><span class="stat-value">${(profileData.last_updated || '').substring(0, 10)}</span></div>
+          </div>
+      `;
+      
+      // 情感分布
+      if (profileData.sentiment_distribution && Object.keys(profileData.sentiment_distribution).length > 0) {
+        const dist = profileData.sentiment_distribution;
+        const total = Object.values(dist).reduce((a, b) => a + b, 0);
+        const positive = ((dist.positive || 0) / total * 100).toFixed(1);
+        const negative = ((dist.negative || 0) / total * 100).toFixed(1);
+        const neutral = ((dist.neutral || 0) / total * 100).toFixed(1);
+        html += `
+          <div class="entity-related-title">📊 情感分布：</div>
+          <div class="sentiment-bars">
+            <div class="sentiment-bar-row">
+              <span class="sentiment-label">积极</span>
+              <div class="sentiment-bar-track"><div class="sentiment-bar sentiment-positive" style="width:${positive}%"></div></div>
+              <span class="sentiment-value">${positive}%</span>
+            </div>
+            <div class="sentiment-bar-row">
+              <span class="sentiment-label">消极</span>
+              <div class="sentiment-bar-track"><div class="sentiment-bar sentiment-negative" style="width:${negative}%"></div></div>
+              <span class="sentiment-value">${negative}%</span>
+            </div>
+            <div class="sentiment-bar-row">
+              <span class="sentiment-label">中性</span>
+              <div class="sentiment-bar-track"><div class="sentiment-bar sentiment-neutral" style="width:${neutral}%"></div></div>
+              <span class="sentiment-value">${neutral}%</span>
+            </div>
+          </div>
+        `;
+      }
+      
+      // 关联实体
+      if (profileData.related_entities && Object.keys(profileData.related_entities).length > 0) {
+        const sorted = Object.entries(profileData.related_entities).sort((a, b) => b[1].weight - a[1].weight).slice(0, 15);
+        html += `<div class="entity-related-title">🔗 高频关联实体 TOP${sorted.length}：</div><div class="entity-related-list">`;
+        sorted.forEach(([name, info]) => {
+          html += `<div class="entity-related-item" data-entity="${name}">
+            <span class="entity-related-name">${name}</span>
+            <span class="entity-related-type entity-type-${info.type}">${getEntityTypeLabel(info.type)}</span>
+            <span class="entity-related-weight">关联 ${info.weight} 次</span>
+          </div>`;
+        });
+        html += '</div>';
+      }
+      
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function renderMinerNetwork(networkData) {
+      const container = document.getElementById('minerNetworkCanvas');
+      if (!networkData || !networkData.nodes || networkData.nodes.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">暂无关联网络数据</div>';
+        return;
+      }
+      
+      const { nodes, edges } = networkData;
+      const width = container.clientWidth || 600;
+      const height = 350;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      
+      container.innerHTML = '';
+      container.style.position = 'relative';
+      container.style.overflow = 'hidden';
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+      container.appendChild(canvas);
+      
+      const ctx = canvas.getContext('2d');
+      
+      // 布局：中心节点在中心，其他分布在周围
+      const centerNode = nodes.find(n => n.is_center) || nodes[0];
+      const otherNodes = nodes.filter(n => !n.is_center);
+      
+      const positions = {};
+      positions[centerNode.id] = { x: centerX, y: centerY, ...centerNode };
+      
+      const radius = Math.min(width, height) * 0.32;
+      const angleStep = otherNodes.length > 0 ? (2 * Math.PI) / otherNodes.length : 0;
+      otherNodes.forEach((node, i) => {
+        const angle = angleStep * i - Math.PI / 2;
+        const dist = radius * (0.8 + Math.random() * 0.4);
+        positions[node.id] = {
+          x: centerX + dist * Math.cos(angle),
+          y: centerY + dist * Math.sin(angle),
+          ...node
+        };
+      });
+      
+      // 绘制
+      ctx.clearRect(0, 0, width, height);
+      
+      // 边
+      for (const edge of edges) {
+        const source = positions[edge.source];
+        const target = positions[edge.target];
+        if (source && target) {
+          ctx.beginPath();
+          ctx.moveTo(source.x, source.y);
+          ctx.lineTo(target.x, target.y);
+          ctx.strokeStyle = 'rgba(139, 92, 246, 0.3)';
+          ctx.lineWidth = Math.min(3, (edge.weight || 1) * 0.5);
+          ctx.stroke();
+        }
+      }
+      
+      // 节点
+      for (const id of Object.keys(positions)) {
+        const node = positions[id];
+        const size = node.size || (node.is_center ? 28 : 12);
+        
+        let color = '#8b5cf6';
+        if (node.type === 'person') color = '#ef4444';
+        else if (node.type === 'country') color = '#10b981';
+        else if (node.type === 'organization') color = '#3b82f6';
+        else if (node.type === 'event') color = '#f59e0b';
+        
+        if (node.is_center) {
+          ctx.shadowColor = 'rgba(139, 92, 246, 0.4)';
+          ctx.shadowBlur = 16;
+        }
+        
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = node.is_center ? 3 : 2;
+        ctx.stroke();
+        
+        // 文字
+        ctx.fillStyle = '#1e293b';
+        ctx.font = node.is_center ? 'bold 13px Microsoft YaHei' : '11px Microsoft YaHei';
+        ctx.textAlign = 'center';
+        let label = node.label || id;
+        if (!node.is_center && label.length > 6) label = label.substring(0, 5) + '..';
+        ctx.fillText(label, node.x, node.y + size + (node.is_center ? 18 : 12));
+      }
+    }
+
+    function renderMinerSentiment(sentimentData) {
+      const canvas = document.getElementById('minerSentimentChart');
+      const loading = document.getElementById('minerSentimentLoading');
+      
+      if (!sentimentData.dates || sentimentData.dates.length === 0) {
+        loading.textContent = '暂无情感趋势数据';
+        loading.style.display = 'block';
+        canvas.style.display = 'none';
+        return;
+      }
+      
+      loading.style.display = 'none';
+      canvas.style.display = 'block';
+      
+      const ctx = canvas.getContext('2d');
+      
+      // 销毁旧图表
+      if (window._minerSentimentChart) {
+        window._minerSentimentChart.destroy();
+      }
+      
+      canvas.parentElement.style.height = '300px';
+      canvas.parentElement.style.position = 'relative';
+      canvas.style.maxHeight = '280px';
+      
+      window._minerSentimentChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: sentimentData.dates,
+          datasets: [
+            {
+              label: '积极%',
+              data: sentimentData.positive_ratios,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4
+            },
+            {
+              label: '消极%',
+              data: sentimentData.negative_ratios,
+              borderColor: '#ef4444',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4
+            },
+            {
+              label: '中性%',
+              data: sentimentData.neutral_ratios,
+              borderColor: '#6b7280',
+              backgroundColor: 'rgba(107, 114, 128, 0.1)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: `${sentimentData.entity_name} 情感趋势` }
+          },
+          scales: {
+            y: { beginAtZero: true, max: 100, title: { display: true, text: '百分比(%)' } }
+          }
+        }
+      });
+    }
+
+    function renderMinerNews(newsData) {
+      const content = document.getElementById('minerNewsListContent');
+      
+      if (!newsData.news || newsData.news.length === 0) {
+        content.innerHTML = '<div class="no-results">暂无相关新闻</div>';
+        return;
+      }
+      
+      let html = `<div style="margin-bottom:8px;color:#6b7280;font-size:13px;">共 ${newsData.total} 篇相关新闻，显示前 ${newsData.returned} 篇</div>`;
+      newsData.news.forEach(item => {
+        const sentimentColors = { positive: '#10b981', negative: '#ef4444', neutral: '#6b7280' };
+        html += `
+          <div class="event-news-item" style="border-left: 3px solid ${sentimentColors[item.sentiment] || '#6b7280'};padding-left:12px;margin-bottom:8px;">
+            <a href="${item.link || '#'}" target="_blank" style="font-weight:500;">${item.title}</a>
+            <div class="event-news-meta" style="font-size:12px;color:#6b7280;margin-top:4px;">
+              <span>📰 ${item.source || '未知'}</span>
+              <span>📅 ${item.date || ''}</span>
+              <span>💬 ${item.sentiment === 'positive' ? '😊积极' : item.sentiment === 'negative' ? '😟消极' : '😐中性'}</span>
+            </div>
+          </div>
+        `;
+      });
+      
+      content.innerHTML = html;
+    }
+
+    // 实体深度挖掘 - 回车搜索
+    document.getElementById('minerEntityName').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('minerAnalyzeBtn').click();
+    });
+
+    // ==================== 新加入样式 ====================
+    const newStyles = document.createElement('style');
+    newStyles.textContent = `
+      .entity-tabs, .miner-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+      .entity-tab, .miner-tab {
+        padding: 6px 14px; border: 1px solid #e5e7eb; background: #f9fafb;
+        border-radius: 6px; cursor: pointer; font-size: 13px; color: #475569;
+        transition: all 0.2s;
+      }
+      .entity-tab:hover, .miner-tab:hover { background: #eef2ff; }
+      .entity-tab.active, .miner-tab.active { background: #0078d4; color: #fff; border-color: #0078d4; }
+      .entity-view-container { min-height: 200px; }
+      .entity-detail-card { background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #e5e7eb; }
+      .entity-detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+      .entity-detail-name { font-size: 18px; font-weight: 600; color: #1e293b; }
+      .entity-detail-name-large { font-size: 22px; }
+      .entity-detail-type {
+        font-size: 12px; padding: 2px 8px; border-radius: 12px;
+        background: #eef2ff; color: #3b82f6;
+      }
+      .entity-type-person { background: #fef2f2; color: #ef4444; }
+      .entity-type-country { background: #ecfdf5; color: #10b981; }
+      .entity-type-organization { background: #f5f3ff; color: #8b5cf6; }
+      .entity-type-event { background: #fffbeb; color: #f59e0b; }
+      .entity-detail-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+      .entity-detail-stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .entity-detail-props { margin-bottom: 12px; font-size: 13px; color: #475569; }
+      .entity-related-title { font-size: 14px; font-weight: 600; color: #374151; margin: 12px 0 8px; }
+      .entity-related-list { display: flex; flex-direction: column; gap: 4px; }
+      .entity-related-item {
+        display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+        border-radius: 6px; cursor: pointer; transition: background 0.2s;
+        font-size: 13px;
+      }
+      .entity-related-item:hover { background: #f0f9ff; }
+      .entity-related-name { flex: 1; color: #1e293b; }
+      .entity-related-weight { color: #9ca3af; font-size: 12px; }
+      .entity-search-count { font-size: 13px; color: #6b7280; margin-bottom: 8px; }
+      .entity-stats { font-size: 13px; color: #6b7280; padding-top: 8px; border-top: 1px solid #e5e7eb; }
+      
+      /* 事件卡片 */
+      .event-card {
+        background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+        padding: 12px; margin-bottom: 8px; transition: box-shadow 0.2s;
+      }
+      .event-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+      .event-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+      .event-summary { flex: 1; font-weight: 500; color: #1e293b; }
+      .event-status {
+        font-size: 11px; padding: 2px 8px; border-radius: 10px;
+        background: #f3f4f6; color: #6b7280; white-space: nowrap;
+      }
+      .event-status-emerging { background: #fef3c7; color: #d97706; }
+      .event-status-active { background: #dbeafe; color: #2563eb; }
+      .event-status-declining { background: #e5e7eb; color: #6b7280; }
+      .event-card-meta { display: flex; gap: 12px; font-size: 12px; color: #6b7280; flex-wrap: wrap; margin-bottom: 4px; }
+      .event-card-entities { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; }
+      .event-entity-tag {
+        font-size: 11px; padding: 1px 6px; border-radius: 4px;
+        background: #f0f9ff; color: #0369a1;
+      }
+      .event-keyword-tag {
+        font-size: 11px; padding: 2px 8px; border-radius: 4px;
+        background: #f5f3ff; color: #7c3aed; margin: 2px; display: inline-block;
+      }
+      .event-card-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+      
+      /* 事件详情弹窗 */
+      #eventDetailModal {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 1000; display: none;
+      }
+      .event-detail-overlay {
+        position: absolute; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.4);
+      }
+      .event-detail-panel {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: #fff; border-radius: 16px; padding: 24px;
+        width: 90%; max-width: 640px; max-height: 80vh; overflow-y: auto;
+        box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+      }
+      .event-detail-close {
+        position: absolute; top: 12px; right: 16px;
+        font-size: 24px; cursor: pointer; color: #6b7280;
+        line-height: 1;
+      }
+      .event-detail-close:hover { color: #ef4444; }
+      .event-detail-info { display: flex; gap: 12px; font-size: 13px; color: #6b7280; flex-wrap: wrap; margin: 8px 0 16px; }
+      .event-detail-section { margin-bottom: 16px; }
+      .event-detail-section h4 { font-size: 14px; color: #374151; margin: 0 0 8px; }
+      .event-news-list { max-height: 300px; overflow-y: auto; }
+      .event-news-item { padding: 6px 0; border-bottom: 1px solid #f3f4f6; }
+      .event-news-item a { color: #1e40af; text-decoration: none; }
+      .event-news-item a:hover { text-decoration: underline; }
+      .event-news-meta { font-size: 12px; color: #6b7280; display: flex; gap: 12px; margin-top: 4px; }
+      .related-event-card {
+        background: #f9fafb; border-radius: 8px; padding: 10px; margin-bottom: 8px;
+      }
+      .related-event-summary { font-weight: 500; color: #1e293b; margin-bottom: 4px; }
+      .related-event-meta { display: flex; gap: 8px; font-size: 12px; color: #6b7280; }
+      .related-event-entities { font-size: 11px; margin-top: 4px; }
+      .related-events-list { max-height: 400px; overflow-y: auto; }
+      
+      /* 时间线 */
+      .timeline-date-group { margin-bottom: 16px; }
+      .timeline-date-header {
+        display: flex; align-items: center; gap: 8px;
+        padding: 6px 12px; background: #f8fafc; border-radius: 8px;
+        margin-bottom: 8px; font-size: 14px;
+      }
+      .timeline-date-badge { font-weight: 600; color: #1e293b; }
+      .timeline-date-count { font-size: 12px; color: #6b7280; }
+      .timeline-item {
+        display: flex; gap: 12px; padding: 8px 12px;
+        border-left: 2px solid #e5e7eb; margin-left: 8px;
+      }
+      .timeline-item-indicator {
+        width: 10px; height: 10px; border-radius: 50%;
+        margin-top: 4px; flex-shrink: 0;
+      }
+      .timeline-item-content { flex: 1; }
+      .timeline-item-title { font-size: 13px; color: #1e40af; text-decoration: none; }
+      .timeline-item-title:hover { text-decoration: underline; }
+      .timeline-item-meta { font-size: 12px; color: #6b7280; margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; }
+      .timeline-event-ref { font-style: italic; }
+      .timeline-entities { display: flex; gap: 4px; flex-wrap: wrap; }
+      
+      /* 情感趋势 */
+      .sentiment-bars { padding: 8px 0; }
+      .sentiment-bar-row {
+        display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+      }
+      .sentiment-label { width: 40px; font-size: 12px; color: #6b7280; }
+      .sentiment-bar-track { flex: 1; height: 16px; background: #f3f4f6; border-radius: 8px; overflow: hidden; }
+      .sentiment-bar { height: 100%; border-radius: 8px; transition: width 0.5s; }
+      .sentiment-positive { background: linear-gradient(90deg, #10b981, #34d399); }
+      .sentiment-negative { background: linear-gradient(90deg, #ef4444, #f87171); }
+      .sentiment-neutral { background: linear-gradient(90deg, #6b7280, #9ca3af); }
+      .sentiment-value { width: 40px; font-size: 12px; color: #6b7280; text-align: right; }
+      
+      .viz-control-row input[type="date"] { font-size: 12px; padding: 4px 8px; }
+      .visualization-card-full { grid-column: 1 / -1; }
+      
+      .event-detail-loading { text-align: center; padding: 40px; color: #6b7280; }
+    `;
+    document.head.appendChild(newStyles);
   </script>
 </body>
 </html>

@@ -71,4 +71,7 @@ test_page.html
 local_llm_cache/
 word_cloud_cache/
 
+# SQLite database
+data/
+test_miner.py
 
