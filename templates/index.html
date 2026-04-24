@@ -453,7 +453,7 @@
           </div>
 
           <canvas id="regionChart" style="display:none;"></canvas>
-          <div id="mapContainer" style="display:none; width:100%; height:100%; min-height:360px;"></div>
+          <div id="mapContainer" style="display:none; width:100%; height:auto; min-height:300px;"></div>
         </div>
         
         <div class="region-statistics">
@@ -1504,6 +1504,7 @@
           // 恢复父容器高度为固定400px（Chart.js需要固定高度才能正确渲染）
           if (parentContainer) {
             parentContainer.style.height = '400px';
+            parentContainer.style.minHeight = '400px';
           }
           if (regionChart === null && regionData) {
             renderRegionChart();
@@ -1511,11 +1512,10 @@
         } else if (view === 'map') {
           chartCanvas.style.display = 'none';
           mapContainer.style.display = 'block';
-          // 地图视图下，父容器需要让子元素撑开高度，
-          // 因为内部有view-toggle(40px) + padding(32px) + map(360px) = 432px
+          // 地图视图下，父容器完全由内容撑开，不设固定高度
           if (parentContainer) {
             parentContainer.style.height = 'auto';
-            parentContainer.style.minHeight = '432px';
+            parentContainer.style.minHeight = 'auto';
           }
           // 初始化地图 - 使用 requestAnimationFrame 确保容器布局完成
           requestAnimationFrame(() => {
@@ -1529,9 +1529,9 @@ function initMapView() {
       const mapContainer = document.getElementById('mapContainer');
       if (!mapContainer) return;
       
-      // 强制设置容器尺寸（减去父容器 padding 上下各16px），避免 Leaflet 因容器 size=0 渲染空白
+      // 不设固定高度，让父容器(已设为height:auto)撑开。只保证最小高度
       mapContainer.style.width = '100%';
-      mapContainer.style.height = '360px';
+      mapContainer.style.height = 'auto';
       
       // 如果地图已存在，重新计算尺寸并返回
       if (mapInstance) {
@@ -1564,9 +1564,7 @@ function initMapView() {
           addMapMarkers(regionData);
         }
         
-        // 多重 invalidateSize 确保地图正确渲染：
-        // 第一次 - 立即执行，让 Leaflet 读取容器尺寸
-        // 第二次 - 延迟执行，确保所有 DOM 更新完成
+        // 多重 invalidateSize 确保地图正确渲染
         setTimeout(() => { mapInstance.invalidateSize(); }, 100);
         setTimeout(() => { mapInstance.invalidateSize(); }, 500);
         setTimeout(() => { mapInstance.invalidateSize(); }, 1000);
