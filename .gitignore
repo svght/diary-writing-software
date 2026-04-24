@@ -68,3 +68,7 @@ test_page.html
 
 # Data files
 *.json
+local_llm_cache/
+word_cloud_cache/
+
+

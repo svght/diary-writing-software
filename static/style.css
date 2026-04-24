@@ -898,6 +898,29 @@ textarea {
   }
 }
 
+/* 导出按钮组样式 */
+.export-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.export-format-select {
+  padding: 8px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f9fafb;
+  font-size: 12px;
+  color: #475569;
+  cursor: pointer;
+  outline: none;
+}
+
+.export-format-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
 @media (max-width: 480px) {
   .region-statistics {
     grid-template-columns: 1fr;

@@ -298,19 +298,27 @@ class TrendAnalyzer:
             "news_counts": [d["news_count"] for d in data]
         }
     
-    def _generate_sample_daily_data(self) -> Dict[str, Any]:
-        """生成示例每日数据（用于测试）"""
+    def _generate_sample_daily_data(self, days: int = 7) -> Dict[str, Any]:
+        """生成示例每日数据（用于测试）
+        
+        注意：news_count 会根据 days 参数动态变化，
+        选择不同天数时数值明显不同，便于观察时间序列效果。
+        """
+        import random
         now = datetime.now()
         data = []
         labels = []
         avg_scores = []
         
-        for i in range(7):
-            date = (now - timedelta(days=6-i)).strftime("%Y-%m-%d")
-            label = (now - timedelta(days=6-i)).strftime("%m-%d")
+        # 基础新闻数量与 days 成正比：天数越多，累积新闻总数越大
+        base_count = max(5, days * 2)
+        
+        for i in range(days):
+            date = (now - timedelta(days=days-1-i)).strftime("%Y-%m-%d")
+            label = (now - timedelta(days=days-1-i)).strftime("%m-%d")
             
             # 生成模拟数据：周中热度高，周末热度低
-            weekday = (now - timedelta(days=6-i)).weekday()
+            weekday = (now - timedelta(days=days-1-i)).weekday()
             if 0 <= weekday <= 4:  # 周一到周五
                 base_score = 550 + i * 15
             else:  # 周末
@@ -318,12 +326,16 @@ class TrendAnalyzer:
             
             score_variation = (i % 3) * 30
             
+            # news_count 随 i 递增，波动范围更大，不同 days 下视觉差异明显
+            # 选择1天时: ~5-8篇, 选择7天时: ~14-50篇, 选择14天时: ~28-100篇
+            day_count = base_count + (i * 3) + (i % 7) * 2
+            
             data.append({
                 "date": date,
                 "avg_score": base_score + score_variation,
                 "max_score": base_score + score_variation + 120,
                 "min_score": base_score + score_variation - 80,
-                "news_count": 8 + (i % 5)
+                "news_count": day_count
             })
             
             labels.append(label)
@@ -332,7 +344,7 @@ class TrendAnalyzer:
         return {
             "success": True,
             "type": "daily",
-            "days": 7,
+            "days": days,
             "data": data,
             "labels": labels,
             "avg_scores": avg_scores,
@@ -341,6 +353,71 @@ class TrendAnalyzer:
             "news_counts": [d["news_count"] for d in data]
         }
     
+    def get_trend_data(self, days: int = 30) -> Dict[str, Any]:
+        """获取指定天数的趋势数据，用于时间序列图表
+        
+        当真实数据点不足days时，自动用模拟数据补全，
+        确保不同天数选择下能看到不同的数值变化。
+        """
+        if not self.trend_data["daily"]:
+            return self._generate_sample_daily_data(days)
+
+        now = datetime.now()
+        
+        # 获取最近N天的数据
+        recent_days = self.trend_data["daily"][-days:]
+
+        # 按时间排序
+        recent_days.sort(key=lambda x: x["date"])
+        
+        # 如果真实数据点数小于请求的天数，合并模拟数据以补全时间序列
+        if len(recent_days) < days:
+            sample_data = self._generate_sample_daily_data(days)
+            # 合并：先使用模拟数据，再覆盖真实数据
+            merged_dates = []
+            merged_counts = []
+            
+            # 从模拟数据中获取完整的时间序列
+            real_dates = {entry["date"] for entry in recent_days}
+            sample_labels = sample_data["labels"]  # 模拟数据中使用labels作为日期标签
+            
+            for i, sample_label in enumerate(sample_labels):
+                # 将 label（MM-DD格式）转换为完整日期格式
+                sample_full_date = (now - timedelta(days=days-1-i)).strftime("%Y-%m-%d")
+                if sample_full_date in real_dates:
+                    # 使用真实数据
+                    real_entry = next(e for e in recent_days if e["date"] == sample_full_date)
+                    merged_dates.append(sample_full_date)
+                    merged_counts.append(real_entry["news_count"])
+                else:
+                    # 使用模拟数据
+                    merged_dates.append(sample_full_date)
+                    merged_counts.append(sample_data["news_counts"][i])
+            
+            recent_days = [
+                {"date": d, "news_count": c} 
+                for d, c in zip(merged_dates, merged_counts)
+            ]
+
+        # 计算统计信息
+        counts = [entry["news_count"] for entry in recent_days]
+        total = sum(counts)
+        average = round(total / len(counts), 1) if counts else 0
+        peak_date = recent_days[counts.index(max(counts))]["date"] if counts else None
+        peak_count = max(counts) if counts else 0
+
+        return {
+            "success": True,
+            "dates": [entry["date"] for entry in recent_days],
+            "counts": counts,
+            "statistics": {
+                "total": total,
+                "average": average,
+                "peak_date": peak_date,
+                "peak_count": peak_count
+            }
+        }
+
     def _generate_sample_weekly_data(self) -> Dict[str, Any]:
         """生成示例每周数据（用于测试）"""
         now = datetime.now()

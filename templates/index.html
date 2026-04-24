@@ -6,6 +6,9 @@
   <title>智能新闻工作台</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
   <header class="site-header">
@@ -348,12 +351,78 @@
       </article>
     </section>
 
+    <!-- 词云图可视化 -->
+    <section class="visualization-grid">
+      <article class="visualization-card">
+        <div class="card-header">
+          <span>热点关键词词云</span>
+          <span class="card-header-hint">关键词分析</span>
+          <div class="export-group">
+            <button id="exportWordCloud" class="button button-secondary button-small">导出</button>
+            <select class="export-format-select" id="wordCloudExportFormat">
+              <option value="png">PNG</option>
+              <option value="svg">SVG</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="visualization-controls">
+          <div class="vis-control-row">
+            <select id="wordCloudType" class="control-input">
+              <option value="all">全部新闻</option>
+              <option value="domestic">国内新闻</option>
+              <option value="international">国际新闻</option>
+            </select>
+            <button id="refreshWordCloud" class="button button-secondary">刷新数据</button>
+          </div>
+          <div class="vis-control-row">
+            <span class="vis-info" id="wordCloudDataInfo">正在加载数据...</span>
+            <span class="vis-info" id="wordCloudUpdateTime"></span>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <div id="wordCloudSkeleton" style="display:none;">
+            <div class="skeleton" style="height: 100%; width: 100%; border-radius: 16px;"></div>
+          </div>
+          <div id="wordCloudLoading">正在加载词云数据...</div>
+          <div id="wordCloudContainer" style="display:none; width:100%; height:100%; min-height:400px;"></div>
+        </div>
+
+        <div class="word-cloud-statistics">
+          <div class="stat-item">
+            <span class="stat-label">关键词总数</span>
+            <span class="stat-value" id="wordCloudStatTotal">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">最高频词</span>
+            <span class="stat-value" id="wordCloudStatTopWord">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">最高频次</span>
+            <span class="stat-value" id="wordCloudStatTopCount">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">平均词频</span>
+            <span class="stat-value" id="wordCloudStatAverage">--</span>
+          </div>
+        </div>
+      </article>
+    </section>
+
     <!-- 地区分布可视化 -->
     <section class="visualization-grid">
       <article class="visualization-card">
         <div class="card-header">
           <span>新闻地区分布分析</span>
           <span class="card-header-hint">数据分析</span>
+          <div class="export-group">
+            <button id="exportRegionChart" class="button button-secondary button-small">导出</button>
+            <select class="export-format-select" id="regionChartExportFormat">
+              <option value="png">PNG</option>
+              <option value="svg">SVG</option>
+            </select>
+          </div>
         </div>
         
         <div class="visualization-controls">
@@ -377,7 +446,14 @@
             <div class="skeleton" style="height: 100%; width: 100%; border-radius: 16px;"></div>
           </div>
           <div id="regionChartLoading">正在加载图表数据...</div>
+
+          <div class="view-toggle">
+            <button class="toggle-btn active" data-view="chart">图表视图</button>
+            <button class="toggle-btn" data-view="map">地图视图</button>
+          </div>
+
           <canvas id="regionChart" style="display:none;"></canvas>
+          <div id="mapContainer" style="display:none; width:100%; height:100%; min-height:400px;"></div>
         </div>
         
         <div class="region-statistics">
@@ -404,6 +480,64 @@
           <div class="selected-info">
             <span id="selectedLabel">未选择</span>
             <div class="selected-news-list" id="selectedNewsList"></div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 时间序列趋势图 -->
+      <article class="visualization-card">
+        <div class="card-header">
+          <span>新闻热度趋势</span>
+          <span class="card-header-hint">时间序列分析</span>
+          <div class="export-group">
+            <button id="exportTrendChart" class="button button-secondary button-small">导出</button>
+            <select class="export-format-select" id="trendChartExportFormat">
+              <option value="png">PNG</option>
+              <option value="svg">SVG</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="visualization-controls">
+          <div class="vis-control-row">
+            <select id="trendTimeRange" class="control-input">
+              <option value="1">最近1天</option>
+              <option value="3">最近3天</option>
+              <option value="7" selected>最近7天</option>
+              <option value="14">最近14天</option>
+            </select>
+            <button id="refreshTrendData" class="button button-secondary">刷新数据</button>
+          </div>
+          <div class="vis-control-row">
+            <span class="vis-info" id="trendDataInfo">正在加载数据...</span>
+            <span class="vis-info" id="trendUpdateTime"></span>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <div id="trendChartSkeleton" style="display:none;">
+            <div class="skeleton" style="height: 100%; width: 100%; border-radius: 16px;"></div>
+          </div>
+          <div id="trendChartLoading">正在加载图表数据...</div>
+          <canvas id="trendChart" style="display:none;"></canvas>
+        </div>
+
+        <div class="trend-statistics">
+          <div class="stat-item">
+            <span class="stat-label">总新闻数</span>
+            <span class="stat-value" id="trendStatTotal">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">日均新闻</span>
+            <span class="stat-value" id="trendStatAverage">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">峰值日期</span>
+            <span class="stat-value" id="trendStatPeakDate">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">峰值数量</span>
+            <span class="stat-value" id="trendStatPeakCount">--</span>
           </div>
         </div>
       </article>
@@ -1339,6 +1473,632 @@
     regionChartLimit.addEventListener('change', loadRegionData);
     refreshRegionData.addEventListener('click', loadRegionData);
 
+    // ==================== 地图视图切换 ====================
+    let mapInstance = null;
+    let mapMarkersGroup = null;
+
+    // 添加地图视图切换按钮样式
+    const toggleStyle = document.createElement('style');
+    toggleStyle.textContent = `
+      .view-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+      .toggle-btn { padding: 8px 16px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 8px; cursor: pointer; font-size: 14px; color: #475569; }
+      .toggle-btn:hover { background: #f3f4f6; }
+      .toggle-btn.active { background: #0078d4; color: #ffffff; border-color: #0078d4; }
+    `;
+    document.head.appendChild(toggleStyle);
+
+    // 绑定视图切换按钮
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const view = this.dataset.view;
+        // 切换按钮激活状态
+        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        // 切换显示
+        const chartCanvas = document.getElementById('regionChart');
+        const mapContainer = document.getElementById('mapContainer');
+        if (view === 'chart') {
+          chartCanvas.style.display = 'block';
+          mapContainer.style.display = 'none';
+          // 如果图表还没渲染，触发重新渲染
+          if (regionChart === null && regionData) {
+            renderRegionChart();
+          }
+        } else if (view === 'map') {
+          chartCanvas.style.display = 'none';
+          mapContainer.style.display = 'block';
+          // 初始化地图
+          initMapView();
+        }
+      });
+    });
+
+    function initMapView() {
+      const mapContainer = document.getElementById('mapContainer');
+      if (!mapContainer) return;
+      
+      // 如果地图已存在，不重复创建
+      if (mapInstance) {
+        mapInstance.invalidateSize();
+        return;
+      }
+      
+      try {
+        // 使用Leaflet创建地图
+        mapInstance = L.map('mapContainer', {
+          center: [20, 0],
+          zoom: 2,
+          minZoom: 2,
+          maxZoom: 18,
+          worldCopyJump: true
+        });
+        
+        // 添加OpenStreetMap瓦片
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 18
+        }).addTo(mapInstance);
+        
+        mapMarkersGroup = L.layerGroup().addTo(mapInstance);
+        
+        // 加载数据并添加标记
+        if (regionData && regionData.countries && regionData.counts) {
+          addMapMarkers(regionData);
+        }
+        
+        // 延迟刷新地图（确保容器显示完成）
+        setTimeout(() => { mapInstance.invalidateSize(); }, 300);
+        
+        regionDataInfo.textContent = '🌍 地图视图已加载';
+      } catch (error) {
+        console.error('地图初始化失败:', error);
+        mapContainer.innerHTML = `<div style="padding:20px;text-align:center;color:#ef4444;">地图加载失败: ${error.message}</div>`;
+      }
+    }
+
+    function addMapMarkers(regionData) {
+      if (!mapInstance || !mapMarkersGroup) return;
+      
+      // 国家坐标映射（部分常见国家）
+      const countryCoords = {
+        '中国': [35.86, 104.19], '美国': [37.09, -95.71], '日本': [36.20, 138.25],
+        '韩国': [35.91, 127.77], '英国': [55.38, -3.44], '法国': [46.23, 2.21],
+        '德国': [51.17, 10.45], '意大利': [41.87, 12.57], '加拿大': [56.13, -106.35],
+        '澳大利亚': [-25.27, 133.78], '印度': [20.59, 78.96], '俄罗斯': [61.52, 105.32],
+        '巴西': [-14.24, -51.93], '南非': [-30.56, 22.94], '墨西哥': [23.63, -102.55],
+        '西班牙': [40.46, -3.75], '荷兰': [52.13, 5.29], '瑞士': [46.82, 8.23],
+        '瑞典': [60.13, 18.64], '挪威': [60.47, 8.47], '丹麦': [56.26, 9.50],
+        '芬兰': [61.92, 25.75], '波兰': [51.92, 19.15], '土耳其': [38.96, 35.24],
+        '伊朗': [32.43, 53.69], '沙特阿拉伯': [23.89, 45.08], '阿联酋': [23.42, 53.85],
+        '以色列': [31.05, 34.85], '埃及': [26.82, 30.80], '尼日利亚': [9.08, 8.68],
+        '肯尼亚': [-0.02, 37.91], '阿根廷': [-38.42, -63.62], '智利': [-35.68, -71.54],
+        '新加坡': [1.35, 103.82], '马来西亚': [4.21, 101.98], '印度尼西亚': [-0.79, 113.92],
+        '泰国': [15.87, 100.99], '越南': [14.06, 108.28], '菲律宾': [12.88, 121.77],
+        '巴基斯坦': [30.38, 69.35], '孟加拉国': [23.68, 90.36], '哈萨克斯坦': [48.02, 66.92],
+        '乌克兰': [48.38, 31.17], '罗马尼亚': [45.94, 24.97], '希腊': [39.07, 21.82],
+        '葡萄牙': [39.40, -8.22], '比利时': [50.50, 4.47], '奥地利': [47.52, 14.55],
+        '捷克': [49.82, 15.47], '匈牙利': [47.16, 19.50], '爱尔兰': [53.14, -8.24],
+        '新西兰': [-40.90, 174.89], '古巴': [21.52, -77.78], '朝鲜': [40.34, 127.51],
+        '蒙古': [46.86, 103.85], '阿富汗': [33.94, 67.71], '伊拉克': [33.22, 43.68],
+        '叙利亚': [34.80, 39.00], '也门': [15.55, 48.52], '阿曼': [21.00, 57.00],
+        '卡塔尔': [25.35, 51.18], '科威特': [29.31, 47.48], '巴林': [26.04, 50.55],
+      };
+      
+      mapMarkersGroup.clearLayers();
+      
+      const maxCount = Math.max(...regionData.counts);
+      
+      regionData.countries.forEach((country, index) => {
+        const count = regionData.counts[index];
+        const coords = countryCoords[country];
+        
+        if (coords) {
+          // 根据新闻数量计算标记大小
+          const radius = Math.max(8, Math.min(30, 8 + (count / maxCount) * 22));
+          const opacity = 0.4 + (count / maxCount) * 0.6;
+          
+          const marker = L.circleMarker(coords, {
+            radius: radius,
+            fillColor: '#ef4444',
+            color: '#dc2626',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: opacity
+          });
+          
+          marker.bindPopup(`
+            <b>${country}</b><br>
+            新闻数量: ${count} 篇
+          `);
+          
+          marker.on('click', () => {
+            selectChartItem(country, count);
+          });
+          
+          mapMarkersGroup.addLayer(marker);
+        }
+      });
+      
+      // 如果有点，自动调整视野
+      if (mapMarkersGroup.getLayers().length > 0) {
+        const bounds = mapMarkersGroup.getBounds();
+        if (bounds.isValid()) {
+          mapInstance.fitBounds(bounds, { padding: [30, 30], maxZoom: 4 });
+        }
+      }
+    }
+
+    // ==================== 词云图渲染 ====================
+    const wordCloudContainer = document.getElementById('wordCloudContainer');
+    const wordCloudType = document.getElementById('wordCloudType');
+    const refreshWordCloud = document.getElementById('refreshWordCloud');
+    const wordCloudDataInfo = document.getElementById('wordCloudDataInfo');
+    const wordCloudUpdateTime = document.getElementById('wordCloudUpdateTime');
+    
+    async function loadWordCloudData() {
+      if (!wordCloudContainer) return;
+      
+      try {
+        wordCloudDataInfo.textContent = '正在加载词云数据...';
+        const type = wordCloudType.value;
+        
+        let allNews = [];
+        if (type === 'all') {
+          if (allDomesticNews) allNews = allNews.concat(allDomesticNews);
+          if (allInternationalNews) allNews = allNews.concat(allInternationalNews);
+        } else if (type === 'domestic') {
+          allNews = allDomesticNews || [];
+        } else if (type === 'international') {
+          allNews = allInternationalNews || [];
+        }
+        
+        // 使用API获取词云数据（如果已有新闻数据则在本地生成）
+        // 但wordcloud2.js需要[word, weight]格式
+        if (allNews.length === 0) {
+          // 没有本地数据，调用API
+          const response = await fetch('/api/wordcloud');
+          if (!response.ok) throw new Error('词云数据加载失败');
+          const data = await response.json();
+          if (!data.success) throw new Error(data.error || '词云数据加载失败');
+          
+          renderWordCloud(data.keywords);
+          wordCloudDataInfo.textContent = `词云数据加载成功 (${data.keywords.length}个关键词)`;
+        } else {
+          // 在本地简单提取关键词
+          const wordCount = {};
+          allNews.forEach(news => {
+            const title = news.title || '';
+            const words = title.match(/[\u4e00-\u9fa5]{2,}|[a-zA-Z]{3,}/g) || [];
+            words.forEach(w => {
+              w = w.toLowerCase();
+              wordCount[w] = (wordCount[w] || 0) + 1;
+            });
+          });
+          
+          const keywords = Object.entries(wordCount)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 80)
+            .map(([word, weight]) => ({ word, weight }));
+          
+          if (keywords.length > 0) {
+            renderWordCloud(keywords);
+            wordCloudDataInfo.textContent = `词云渲染完成 (${keywords.length}个关键词)`;
+          } else {
+            // 没有提取到关键词，调用API
+            const response = await fetch('/api/wordcloud');
+            if (!response.ok) throw new Error('词云数据加载失败');
+            const data = await response.json();
+            if (!data.success) throw new Error(data.error || '词云数据加载失败');
+            
+            renderWordCloud(data.keywords);
+            wordCloudDataInfo.textContent = `词云数据加载成功 (${data.keywords.length}个关键词)`;
+          }
+        }
+        
+        wordCloudUpdateTime.textContent = `更新时间: ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`;
+      } catch (error) {
+        console.error('词云数据加载失败:', error);
+        wordCloudDataInfo.textContent = `词云加载失败: ${error.message}`;
+      }
+    }
+
+    function renderWordCloud(keywords) {
+      if (!wordCloudContainer) return;
+      
+      // 显示容器
+      wordCloudContainer.style.display = 'block';
+      
+      // 隐藏加载状态
+      const wordCloudLoading = document.getElementById('wordCloudLoading');
+      if (wordCloudLoading) wordCloudLoading.style.display = 'none';
+      
+      // 清空容器
+      wordCloudContainer.innerHTML = '';
+      
+      if (!keywords || keywords.length === 0) {
+        wordCloudContainer.innerHTML = '<div style="text-align:center;padding:40px;color:#6b7280;">暂无关键词数据</div>';
+        return;
+      }
+      
+      // 准备wordcloud2格式数据: [[word, weight], ...]
+      const words = keywords.map(k => [k.word, k.weight]);
+      
+      // 使用wordcloud2.js渲染
+      try {
+        // 清空容器
+        wordCloudContainer.innerHTML = '';
+        
+        // WordCloud需要canvas元素
+        const canvas = document.createElement('canvas');
+        canvas.width = wordCloudContainer.clientWidth || 600;
+        canvas.height = wordCloudContainer.clientHeight || 400;
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        wordCloudContainer.appendChild(canvas);
+        
+        // 调用WordCloud
+        if (typeof WordCloud !== 'undefined') {
+          WordCloud(canvas, {
+            list: words,
+            gridSize: 12,
+            weightFactor: function(w) { return Math.pow(w, 0.6) * 12; },
+            fontFamily: 'Microsoft YaHei, sans-serif',
+            color: function(word, weight) {
+              const colors = ['#1e40af', '#3b82f6', '#60a5fa', '#7c3aed', '#8b5cf6', '#a78bfa', '#059669', '#10b981', '#34d399', '#d97706', '#f59e0b', '#fbbf24', '#dc2626', '#ef4444', '#f87171', '#db2777', '#ec4899', '#f472b6'];
+              return colors[Math.floor(Math.random() * colors.length)];
+            },
+            rotateRatio: 0.3,
+            minSize: 12,
+            maxSize: 48,
+            shape: 'circle',
+            ellipticity: 0.6,
+            shuffle: false,
+            backgroundColor: '#ffffff',
+            clearCanvas: true
+          });
+          
+          // 更新统计信息
+          updateWordCloudStatistics(keywords);
+        } else {
+          wordCloudContainer.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">WordCloud库未加载，请刷新页面重试</div>';
+        }
+      } catch (error) {
+        console.error('词云渲染失败:', error);
+        wordCloudContainer.innerHTML = `<div style="text-align:center;padding:40px;color:#ef4444;">词云渲染失败: ${error.message}</div>`;
+      }
+    }
+
+    function updateWordCloudStatistics(keywords) {
+      const total = keywords.length;
+      const topWord = keywords[0]?.word || '--';
+      const topCount = keywords[0]?.weight || '--';
+      const avg = total > 0 ? Math.round(keywords.reduce((s, k) => s + k.weight, 0) / total) : '--';
+      
+      document.getElementById('wordCloudStatTotal').textContent = total;
+      document.getElementById('wordCloudStatTopWord').textContent = topWord;
+      document.getElementById('wordCloudStatTopCount').textContent = topCount;
+      document.getElementById('wordCloudStatAverage').textContent = avg;
+    }
+
+    // 监听词云类型切换和刷新
+    wordCloudType?.addEventListener('change', loadWordCloudData);
+    refreshWordCloud?.addEventListener('click', loadWordCloudData);
+
+    // ==================== 时间序列趋势图 ====================
+    const trendChartCanvas = document.getElementById('trendChart');
+    const trendChartLoading = document.getElementById('trendChartLoading');
+    const trendTimeRange = document.getElementById('trendTimeRange');
+    const refreshTrendData = document.getElementById('refreshTrendData');
+    const trendDataInfo = document.getElementById('trendDataInfo');
+    const trendUpdateTime = document.getElementById('trendUpdateTime');
+    let trendChart = null;
+    let trendData = null;
+
+    async function loadTrendData() {
+      const trendChartSkeleton = document.getElementById('trendChartSkeleton');
+      if (trendChartSkeleton) trendChartSkeleton.style.display = 'block';
+      if (trendChartCanvas) trendChartCanvas.style.display = 'none';
+      
+      try {
+        trendDataInfo.textContent = '正在加载趋势数据...';
+        trendChartLoading.textContent = '正在加载图表数据...';
+        trendChartLoading.style.display = 'block';
+        const days = parseInt(trendTimeRange.value);
+
+        const response = await fetch(`/api/trend?days=${days}`);
+        if (!response.ok) throw new Error('趋势数据加载失败');
+        
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error || '趋势数据加载失败');
+
+        trendData = data;
+        renderTrendChart();
+        updateTrendStatistics();
+        trendDataInfo.textContent = `数据加载成功 (${data.dates ? data.dates.length : 0}天)`;
+        trendUpdateTime.textContent = `更新时间: ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`;
+      } catch (error) {
+        console.error('加载趋势数据失败:', error);
+        trendDataInfo.textContent = '数据加载失败: ' + error.message;
+        trendChartLoading.textContent = '图表数据加载失败';
+        trendUpdateTime.textContent = '';
+        
+        const trendChartSkeleton = document.getElementById('trendChartSkeleton');
+        if (trendChartSkeleton) trendChartSkeleton.style.display = 'none';
+        if (trendChartCanvas) trendChartCanvas.style.display = 'block';
+      }
+    }
+
+    function renderTrendChart() {
+      if (!trendData) return;
+      trendChartLoading.style.display = 'none';
+
+      const trendChartSkeleton = document.getElementById('trendChartSkeleton');
+      if (trendChartSkeleton) trendChartSkeleton.style.display = 'none';
+      if (trendChartCanvas) trendChartCanvas.style.display = 'block';
+
+      const ctx = trendChartCanvas.getContext('2d');
+      if (trendChart) trendChart.destroy();
+
+      const labels = trendData.dates;
+      const dataValues = trendData.counts;
+      if (!dataValues || dataValues.length === 0) {
+        trendChartLoading.textContent = '没有数据可显示';
+        trendChartLoading.style.display = 'block';
+        return;
+      }
+
+      const chartData = {
+        labels: labels,
+        datasets: [{
+          label: '新闻数量',
+          data: dataValues,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#3b82f6',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2
+        }]
+      };
+
+      const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `新闻数量: ${context.parsed.y} 篇`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            title: { display: true, text: '日期' },
+            ticks: {
+              maxRotation: 45,
+              minRotation: 45
+            }
+          },
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: '新闻数量' }
+          }
+        },
+        interaction: {
+          intersect: false,
+          mode: 'index'
+        }
+      };
+
+      try {
+        trendChart = new Chart(ctx, { type: 'line', data: chartData, options: chartOptions });
+      } catch (error) {
+        console.error('图表创建失败:', error);
+        trendChartLoading.textContent = '图表创建失败: ' + error.message;
+        trendChartLoading.style.display = 'block';
+      }
+    }
+
+    function updateTrendStatistics() {
+      if (!trendData || !trendData.statistics) return;
+      
+      const stats = trendData.statistics;
+      document.getElementById('trendStatTotal').textContent = stats.total || 0;
+      document.getElementById('trendStatAverage').textContent = stats.average || 0;
+      document.getElementById('trendStatPeakDate').textContent = stats.peak_date || '--';
+      document.getElementById('trendStatPeakCount').textContent = stats.peak_count || 0;
+    }
+
+    trendTimeRange.addEventListener('change', loadTrendData);
+    refreshTrendData.addEventListener('click', loadTrendData);
+
+    // ==================== 图表导出功能 ====================
+    /**
+     * 通用导出函数 - 将Canvas或DOM元素导出为图片
+     * @param {string} canvasId - Canvas元素的ID
+     * @param {string} containerId - 备用的容器元素ID（当canvas不可见时使用）
+     * @param {string} format - 导出格式 ('png' 或 'svg')
+     * @param {string} filename - 下载文件名（不含扩展名）
+     * @param {string} statusInfoId - 状态信息显示元素的ID
+     */
+    function exportChartToImage(canvasId, containerId, format, filename, statusInfoId) {
+      const statusEl = document.getElementById(statusInfoId);
+      
+      try {
+        // 尝试从Canvas导出
+        let canvas = document.getElementById(canvasId);
+        
+        if (!canvas || canvas.style.display === 'none') {
+          // Canvas不可见，尝试从容器元素截图
+          const container = document.getElementById(containerId);
+          if (!container || container.style.display === 'none') {
+            if (statusEl) statusEl.textContent = '⚠️ 图表尚未加载，请先刷新数据';
+            return;
+          }
+          
+          // 对于非Canvas元素（如词云容器的div），使用html2canvas方式
+          // 由于没有引入html2canvas库，回退到提示用户
+          if (statusEl) statusEl.textContent = '⚠️ 当前视图不支持直接导出，请切换到图表视图后重试';
+          return;
+        }
+
+        if (format === 'png') {
+          // PNG导出
+          const link = document.createElement('a');
+          link.download = `${filename}.png`;
+          link.href = canvas.toDataURL('image/png');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          if (statusEl) statusEl.textContent = `✅ 已导出 ${filename}.png`;
+        } else if (format === 'svg') {
+          // SVG导出 - 将Canvas转为PNG并下载（SVG实现方式）
+          // 对于纯Canvas图表，实际上导出的是PNG格式，这已经是浏览器支持的最佳方式
+          const link = document.createElement('a');
+          link.download = `${filename}.png`;
+          link.href = canvas.toDataURL('image/png');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          if (statusEl) statusEl.textContent = `✅ 已导出 ${filename}.png（SVG格式暂不支持，已使用PNG替代）`;
+        }
+
+        // 3秒后清除状态提示
+        setTimeout(() => {
+          if (statusEl) {
+            statusEl.textContent = statusEl.dataset.originalText || '';
+          }
+        }, 3000);
+      } catch (error) {
+        console.error('导出失败:', error);
+        if (statusEl) statusEl.textContent = `❌ 导出失败: ${error.message}`;
+      }
+    }
+
+    // 保存状态信息的原始文本
+    function saveOriginalStatusText(id) {
+      const el = document.getElementById(id);
+      if (el && !el.dataset.originalText) {
+        el.dataset.originalText = el.textContent;
+      }
+    }
+
+    // 导出词云图
+    document.getElementById('exportWordCloud')?.addEventListener('click', () => {
+      const format = document.getElementById('wordCloudExportFormat')?.value || 'png';
+      saveOriginalStatusText('wordCloudDataInfo');
+      // 词云使用wordcloud2.js渲染到canvas，但它在canvas上绘制
+      // 我们需要找到wordcloud2使用的canvas元素
+      const wcContainer = document.getElementById('wordCloudContainer');
+      if (wcContainer) {
+        const canvas = wcContainer.querySelector('canvas');
+        if (canvas) {
+          if (format === 'png') {
+            const link = document.createElement('a');
+            link.download = `词云图.png`;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            document.getElementById('wordCloudDataInfo').textContent = '✅ 词云已导出为PNG';
+          } else {
+            const link = document.createElement('a');
+            link.download = `词云图.png`;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            document.getElementById('wordCloudDataInfo').textContent = '✅ 词云已导出（SVG格式暂不支持，已使用PNG替代）';
+          }
+          setTimeout(() => { document.getElementById('wordCloudDataInfo').textContent = document.getElementById('wordCloudDataInfo').dataset.originalText || ''; }, 3000);
+        } else {
+          document.getElementById('wordCloudDataInfo').textContent = '⚠️ 词云尚未加载完成，请等待';
+        }
+      }
+    });
+
+    // 导出地区分布图
+    document.getElementById('exportRegionChart')?.addEventListener('click', () => {
+      const format = document.getElementById('regionChartExportFormat')?.value || 'png';
+      
+      // 检查当前是图表视图还是地图视图
+      const mapContainer = document.getElementById('mapContainer');
+      const regionChartCanvas = document.getElementById('regionChart');
+      
+      if (regionChartCanvas && regionChartCanvas.style.display !== 'none') {
+        // 图表视图 - 导出Chart.js图表
+        if (regionChart) {
+          const canvas = regionChart.canvas;
+          if (format === 'png') {
+            const link = document.createElement('a');
+            link.download = `地区分布图.png`;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          } else {
+            const link = document.createElement('a');
+            link.download = `地区分布图.png`;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }
+          saveOriginalStatusText('regionDataInfo');
+          document.getElementById('regionDataInfo').textContent = '✅ 地区分布图已导出';
+          setTimeout(() => { document.getElementById('regionDataInfo').textContent = document.getElementById('regionDataInfo').dataset.originalText || ''; }, 3000);
+        } else {
+          saveOriginalStatusText('regionDataInfo');
+          document.getElementById('regionDataInfo').textContent = '⚠️ 图表尚未加载';
+        }
+      } else if (mapContainer && mapContainer.style.display !== 'none') {
+        // 地图视图 - 导出Leaflet地图
+        saveOriginalStatusText('regionDataInfo');
+        document.getElementById('regionDataInfo').textContent = '⚠️ 地图视图导出请切换到图表视图后重试';
+        setTimeout(() => { document.getElementById('regionDataInfo').textContent = document.getElementById('regionDataInfo').dataset.originalText || ''; }, 3000);
+      } else {
+        saveOriginalStatusText('regionDataInfo');
+        document.getElementById('regionDataInfo').textContent = '⚠️ 图表尚未加载';
+      }
+    });
+
+    // 导出趋势图
+    document.getElementById('exportTrendChart')?.addEventListener('click', () => {
+      const format = document.getElementById('trendChartExportFormat')?.value || 'png';
+      
+      if (trendChart) {
+        const canvas = trendChart.canvas;
+        if (format === 'png') {
+          const link = document.createElement('a');
+          link.download = `热度趋势图.png`;
+          link.href = canvas.toDataURL('image/png');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          const link = document.createElement('a');
+          link.download = `热度趋势图.png`;
+          link.href = canvas.toDataURL('image/png');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+        saveOriginalStatusText('trendDataInfo');
+        document.getElementById('trendDataInfo').textContent = '✅ 趋势图已导出';
+        setTimeout(() => { document.getElementById('trendDataInfo').textContent = document.getElementById('trendDataInfo').dataset.originalText || ''; }, 3000);
+      } else {
+        saveOriginalStatusText('trendDataInfo');
+        document.getElementById('trendDataInfo').textContent = '⚠️ 趋势图尚未加载';
+      }
+    });
+
     // ==================== 初始化 ====================
     window.addEventListener('DOMContentLoaded', async () => {
       const usedSystemCity = await setInitialCityFromSystemLocation();
@@ -1351,6 +2111,16 @@
       setTimeout(() => {
         loadRegionData();
       }, 1500);
+
+      // 初始化时间序列趋势图
+      setTimeout(() => {
+        loadTrendData();
+      }, 2000);
+
+      // 初始化词云图
+      setTimeout(() => {
+        loadWordCloudData();
+      }, 2500);
 
       // 改写输入框联动 - 当手动输入时清空下拉选择
       rewriteManualTitle.addEventListener('input', () => { rewriteNewsSelect.value = ''; });
