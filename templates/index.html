@@ -1497,15 +1497,26 @@
         // 切换显示
         const chartCanvas = document.getElementById('regionChart');
         const mapContainer = document.getElementById('mapContainer');
+        const parentContainer = document.querySelector('.chart-container');
         if (view === 'chart') {
           chartCanvas.style.display = 'block';
           mapContainer.style.display = 'none';
+          // 恢复父容器高度为固定400px（Chart.js需要固定高度才能正确渲染）
+          if (parentContainer) {
+            parentContainer.style.height = '400px';
+          }
           if (regionChart === null && regionData) {
             renderRegionChart();
           }
         } else if (view === 'map') {
           chartCanvas.style.display = 'none';
           mapContainer.style.display = 'block';
+          // 地图视图下，父容器需要让子元素撑开高度，
+          // 因为内部有view-toggle(40px) + padding(32px) + map(360px) = 432px
+          if (parentContainer) {
+            parentContainer.style.height = 'auto';
+            parentContainer.style.minHeight = '432px';
+          }
           // 初始化地图 - 使用 requestAnimationFrame 确保容器布局完成
           requestAnimationFrame(() => {
             initMapView();
