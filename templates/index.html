@@ -97,8 +97,56 @@
           </select>
         </div>
         <div class="news-tabs" id="domesticTabs"></div>
-        <div class="news-meta" id="domesticNewsLoading">正在加载国内新闻...</div>
-        <ul class="news-list" id="domesticNews"></ul>
+        <div class="loading-status" id="domesticNewsLoadingStatus">
+          <div class="loading-status-icon"></div>
+          <span>正在加载国内新闻...</span>
+        </div>
+        <div class="progress-container" id="domesticNewsProgress" style="display:none;">
+          <div class="progress-bar animated" id="domesticNewsProgressBar"></div>
+        </div>
+        <div class="news-list skeleton-container" id="domesticNewsSkeleton">
+          <div class="skeleton-card skeleton-news-item">
+            <div class="skeleton skeleton-checkbox"></div>
+            <div class="skeleton-content">
+              <div class="skeleton skeleton-title"></div>
+              <div class="skeleton skeleton-text"></div>
+              <div class="skeleton skeleton-text" style="width: 80%;"></div>
+              <div class="skeleton-meta">
+                <span class="skeleton"></span>
+                <span class="skeleton"></span>
+                <span class="skeleton"></span>
+              </div>
+            </div>
+          </div>
+          <div class="skeleton-card skeleton-news-item">
+            <div class="skeleton skeleton-checkbox"></div>
+            <div class="skeleton-content">
+              <div class="skeleton skeleton-title"></div>
+              <div class="skeleton skeleton-text"></div>
+              <div class="skeleton skeleton-text" style="width: 60%;"></div>
+              <div class="skeleton-meta">
+                <span class="skeleton"></span>
+                <span class="skeleton"></span>
+                <span class="skeleton"></span>
+              </div>
+            </div>
+          </div>
+          <div class="skeleton-card skeleton-news-item">
+            <div class="skeleton skeleton-checkbox"></div>
+            <div class="skeleton-content">
+              <div class="skeleton skeleton-title"></div>
+              <div class="skeleton skeleton-text"></div>
+              <div class="skeleton skeleton-text" style="width: 75%;"></div>
+              <div class="skeleton-meta">
+                <span class="skeleton"></span>
+                <span class="skeleton"></span>
+                <span class="skeleton"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="news-meta" id="domesticNewsLoading" style="display:none;">正在加载国内新闻...</div>
+        <ul class="news-list" id="domesticNews" style="display:none;"></ul>
       </article>
       <article class="news-card news-highlight">
         <div class="card-header news-header">
@@ -117,8 +165,56 @@
             <option value="其他">其他</option>
           </select>
         </div>
-        <div class="news-meta" id="internationalNewsLoading">正在加载国际新闻...</div>
-        <ul class="news-list" id="internationalNews"></ul>
+        <div class="loading-status" id="internationalNewsLoadingStatus">
+          <div class="loading-status-icon"></div>
+          <span>正在加载国际新闻...</span>
+        </div>
+        <div class="progress-container" id="internationalNewsProgress" style="display:none;">
+          <div class="progress-bar animated" id="internationalNewsProgressBar"></div>
+        </div>
+        <div class="news-list skeleton-container" id="internationalNewsSkeleton">
+          <div class="skeleton-card skeleton-news-item">
+            <div class="skeleton skeleton-checkbox"></div>
+            <div class="skeleton-content">
+              <div class="skeleton skeleton-title"></div>
+              <div class="skeleton skeleton-text"></div>
+              <div class="skeleton skeleton-text" style="width: 80%;"></div>
+              <div class="skeleton-meta">
+                <span class="skeleton"></span>
+                <span class="skeleton"></span>
+                <span class="skeleton"></span>
+              </div>
+            </div>
+          </div>
+          <div class="skeleton-card skeleton-news-item">
+            <div class="skeleton skeleton-checkbox"></div>
+            <div class="skeleton-content">
+              <div class="skeleton skeleton-title"></div>
+              <div class="skeleton skeleton-text"></div>
+              <div class="skeleton skeleton-text" style="width: 60%;"></div>
+              <div class="skeleton-meta">
+                <span class="skeleton"></span>
+                <span class="skeleton"></span>
+                <span class="skeleton"></span>
+              </div>
+            </div>
+          </div>
+          <div class="skeleton-card skeleton-news-item">
+            <div class="skeleton skeleton-checkbox"></div>
+            <div class="skeleton-content">
+              <div class="skeleton skeleton-title"></div>
+              <div class="skeleton skeleton-text"></div>
+              <div class="skeleton skeleton-text" style="width: 75%;"></div>
+              <div class="skeleton-meta">
+                <span class="skeleton"></span>
+                <span class="skeleton"></span>
+                <span class="skeleton"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="news-meta" id="internationalNewsLoading" style="display:none;">正在加载国际新闻...</div>
+        <ul class="news-list" id="internationalNews" style="display:none;"></ul>
       </article>
     </section>
 
@@ -277,8 +373,11 @@
         </div>
         
         <div class="chart-container">
+          <div id="regionChartSkeleton" style="display:none;">
+            <div class="skeleton" style="height: 100%; width: 100%; border-radius: 16px;"></div>
+          </div>
           <div id="regionChartLoading">正在加载图表数据...</div>
-          <canvas id="regionChart"></canvas>
+          <canvas id="regionChart" style="display:none;"></canvas>
         </div>
         
         <div class="region-statistics">
@@ -377,6 +476,12 @@
     }
 
     async function loadWeather(city) {
+      // 显示天气加载状态
+      weatherCondition.textContent = '加载中...';
+      weatherTemperature.innerHTML = '<div class="skeleton" style="height: 56px; width: 100px;"></div>';
+      weatherSummary.innerHTML = '<div class="skeleton" style="height: 16px; width: 200px;"></div>';
+      weatherDetails.innerHTML = '<div class="skeleton" style="height: 16px; width: 180px;"></div>';
+      
       try {
         const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
         const data = await response.json();
@@ -396,22 +501,85 @@
     }
 
     // ==================== 新闻加载与显示 ====================
+    // 骨架屏和进度条控制
+    function showLoadingState(type) {
+      const skeleton = document.getElementById(`${type}NewsSkeleton`);
+      const list = document.getElementById(`${type}News`);
+      const loadingStatus = document.getElementById(`${type}NewsLoadingStatus`);
+      const progress = document.getElementById(`${type}NewsProgress`);
+      const progressBar = document.getElementById(`${type}NewsProgressBar`);
+      const loadingText = document.getElementById(`${type}NewsLoading`);
+      
+      if (skeleton) skeleton.style.display = 'grid';
+      if (list) list.style.display = 'none';
+      if (loadingStatus) loadingStatus.style.display = 'flex';
+      if (progress) progress.style.display = 'block';
+      if (progressBar) {
+        progressBar.style.width = '0%';
+        setTimeout(() => progressBar.style.width = '30%', 100);
+      }
+      if (loadingText) loadingText.style.display = 'none';
+    }
+
+    function hideLoadingState(type, success = true) {
+      const skeleton = document.getElementById(`${type}NewsSkeleton`);
+      const list = document.getElementById(`${type}News`);
+      const loadingStatus = document.getElementById(`${type}NewsLoadingStatus`);
+      const progress = document.getElementById(`${type}NewsProgress`);
+      const progressBar = document.getElementById(`${type}NewsProgressBar`);
+      const loadingText = document.getElementById(`${type}NewsLoading`);
+      
+      if (progressBar) {
+        progressBar.style.width = '100%';
+        setTimeout(() => {
+          if (progress) progress.style.display = 'none';
+          if (loadingStatus) loadingStatus.style.display = 'none';
+          if (skeleton) skeleton.style.display = 'none';
+          if (list) list.style.display = 'grid';
+          if (loadingText) {
+            loadingText.style.display = 'block';
+            if (!success) {
+              loadingText.textContent = `${type === 'domestic' ? '国内' : '国际'}新闻加载失败`;
+            }
+          }
+        }, 300);
+      }
+    }
+
+    function updateProgress(type, percent) {
+      const progressBar = document.getElementById(`${type}NewsProgressBar`);
+      if (progressBar) {
+        progressBar.style.width = `${percent}%`;
+      }
+    }
+
     async function loadNews() {
-      domesticNewsLoading.textContent = '正在加载国内新闻...';
-      internationalNewsLoading.textContent = '正在加载国际新闻...';
+      showLoadingState('domestic');
+      showLoadingState('international');
+      
       domesticNews.innerHTML = '';
       internationalNews.innerHTML = '';
+      
       try {
+        updateProgress('domestic', 50);
+        updateProgress('international', 50);
+        
         const response = await fetch('/api/news');
         const data = await response.json();
+        
         if (!data.success) throw new Error('新闻加载失败');
+        
         allDomesticNews = data.domestic || [];
         allInternationalNews = data.international || [];
+        
         applyDomesticFilters();
         applyNewsFilters();
+        
+        hideLoadingState('domestic', true);
+        hideLoadingState('international', true);
       } catch (error) {
-        domesticNewsLoading.textContent = '国内新闻加载失败';
-        internationalNewsLoading.textContent = '国际新闻加载失败';
+        hideLoadingState('domestic', false);
+        hideLoadingState('international', false);
       }
     }
 
@@ -531,8 +699,17 @@
     regionFilter.addEventListener('change', applyNewsFilters);
 
     const refreshNewsAction = () => {
-      domesticNewsLoading.textContent = '正在刷新国内新闻...';
-      internationalNewsLoading.textContent = '正在刷新国际新闻...';
+      // 刷新时更新加载状态文本
+      const domesticStatus = document.getElementById('domesticNewsLoadingStatus');
+      const internationalStatus = document.getElementById('internationalNewsLoadingStatus');
+      
+      if (domesticStatus) {
+        domesticStatus.querySelector('span').textContent = '正在刷新国内新闻...';
+      }
+      if (internationalStatus) {
+        internationalStatus.querySelector('span').textContent = '正在刷新国际新闻...';
+      }
+      
       loadNews();
     };
     refreshNews.addEventListener('click', refreshNewsAction);
@@ -994,6 +1171,11 @@
     let selectedItemName = null;
 
     async function loadRegionData() {
+      // 显示骨架屏
+      const regionChartSkeleton = document.getElementById('regionChartSkeleton');
+      if (regionChartSkeleton) regionChartSkeleton.style.display = 'block';
+      if (regionChartCanvas) regionChartCanvas.style.display = 'none';
+      
       try {
         regionDataInfo.textContent = '正在加载地区分布数据...';
         regionChartLoading.textContent = '正在加载图表数据...';
@@ -1030,6 +1212,11 @@
         regionDataInfo.textContent = '数据加载失败: ' + error.message;
         regionChartLoading.textContent = '图表数据加载失败';
         regionUpdateTime.textContent = '';
+        
+        // 隐藏骨架屏，显示错误信息
+        const regionChartSkeleton = document.getElementById('regionChartSkeleton');
+        if (regionChartSkeleton) regionChartSkeleton.style.display = 'none';
+        if (regionChartCanvas) regionChartCanvas.style.display = 'block';
       }
     }
 
@@ -1051,6 +1238,12 @@
     function renderRegionChart() {
       if (!regionData) return;
       regionChartLoading.style.display = 'none';
+      
+      // 隐藏骨架屏，显示canvas
+      const regionChartSkeleton = document.getElementById('regionChartSkeleton');
+      if (regionChartSkeleton) regionChartSkeleton.style.display = 'none';
+      if (regionChartCanvas) regionChartCanvas.style.display = 'block';
+      
       const ctx = regionChartCanvas.getContext('2d');
       if (regionChart) regionChart.destroy();
 
