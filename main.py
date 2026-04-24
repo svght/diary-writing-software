@@ -494,6 +494,53 @@ def api_trend():
         return jsonify(success=False, error=f'获取趋势数据失败: {str(e)}'), 500
 
 
+# ==================== 搜索功能增强 ====================
+
+@app.route('/api/news/search')
+def api_news_search():
+    """全文搜索新闻（标题+内容），支持高级筛选"""
+    try:
+        keyword = request.args.get('keyword', '').strip()
+        category = request.args.get('category', 'all')
+        fulltext = request.args.get('fulltext', 'true').lower() in ('true', '1', 'yes')
+        time_range = request.args.get('time_range', 'all')
+        source = request.args.get('source', '').strip()
+        sentiment = request.args.get('sentiment', 'all')
+
+        results = news_service.search_news(
+            keyword=keyword,
+            category=category,
+            fulltext=fulltext,
+            time_range=time_range,
+            source=source,
+            sentiment=sentiment,
+            max_results=50
+        )
+
+        return jsonify({
+            "success": True,
+            "results": results,
+            "total": len(results),
+            "keyword": keyword
+        })
+
+    except Exception as e:
+        return jsonify(success=False, error=f'搜索失败: {str(e)}'), 500
+
+
+@app.route('/api/news/sources')
+def api_news_sources():
+    """获取所有新闻来源列表"""
+    try:
+        sources = news_service.get_all_sources()
+        return jsonify({
+            "success": True,
+            "sources": sources
+        })
+    except Exception as e:
+        return jsonify(success=False, error=f'获取来源列表失败: {str(e)}'), 500
+
+
 @app.route('/api/region/news/by-region', methods=['GET'])
 def api_region_news_by_region():
     """获取指定地区的新闻"""

@@ -400,7 +400,91 @@ textarea {
   color: #6b7280;
 }
 
-/* 可视化网格样式 */
+/* ==================== 搜索功能增强样式 ==================== */
+
+.search-main-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.search-main-row .news-search {
+  flex: 1;
+}
+
+.fulltext-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.fulltext-toggle input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.toggle-advanced-btn {
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.advanced-filters {
+  width: 100%;
+  padding: 8px 0;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-select {
+  flex: 1;
+  min-width: 100px;
+  font-size: 12px;
+}
+
+.search-result-info {
+  font-size: 12px;
+  color: #6b7280;
+  padding: 2px 0;
+  display: none;
+  font-style: italic;
+}
+
+.search-highlight {
+  background-color: #fef08a !important;
+  color: #1e293b !important;
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: 600;
+}
+
+.search-result-item a {
+  font-weight: 500;
+}
+
+.news-sentiment {
+  font-size: 11px;
+  color: #7c3aed;
+}
+
+/* ==================== 可视化网格样式 ==================== */
+
 .visualization-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
