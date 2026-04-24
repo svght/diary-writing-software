@@ -1529,9 +1529,10 @@ function initMapView() {
       const mapContainer = document.getElementById('mapContainer');
       if (!mapContainer) return;
       
-      // 不设固定高度，让父容器(已设为height:auto)撑开。只保证最小高度
+      // 临时设固定高度400px，确保Leaflet初始化时容器有明确尺寸
+      // 等地图瓦片加载完成后，再移除固定高度让父容器由内容撑开
       mapContainer.style.width = '100%';
-      mapContainer.style.height = 'auto';
+      mapContainer.style.height = '400px';
       
       // 如果地图已存在，重新计算尺寸并返回
       if (mapInstance) {
@@ -1564,10 +1565,15 @@ function initMapView() {
           addMapMarkers(regionData);
         }
         
-        // 多重 invalidateSize 确保地图正确渲染
-        setTimeout(() => { mapInstance.invalidateSize(); }, 100);
-        setTimeout(() => { mapInstance.invalidateSize(); }, 500);
-        setTimeout(() => { mapInstance.invalidateSize(); }, 1000);
+        // 第一次：等地图瓦片加载后，移除固定高度，恢复auto由内容撑开
+        setTimeout(() => { 
+          mapInstance.invalidateSize(); 
+          mapContainer.style.height = 'auto';
+        }, 200);
+        // 第二次：进一步重算
+        setTimeout(() => { mapInstance.invalidateSize(); }, 600);
+        // 第三次：最终重算（地图瓦片全部加载完成）
+        setTimeout(() => { mapInstance.invalidateSize(); }, 1200);
         
         regionDataInfo.textContent = '🌍 地图视图已加载';
       } catch (error) {
