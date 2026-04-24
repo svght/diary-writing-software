@@ -1539,7 +1539,7 @@
           maxZoom: 18
         }).addTo(mapInstance);
         
-        mapMarkersGroup = L.layerGroup().addTo(mapInstance);
+        mapMarkersGroup = L.featureGroup().addTo(mapInstance);
         
         // 加载数据并添加标记
         if (regionData && regionData.countries && regionData.counts) {
