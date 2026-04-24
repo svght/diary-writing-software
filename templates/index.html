@@ -1500,26 +1500,33 @@
         if (view === 'chart') {
           chartCanvas.style.display = 'block';
           mapContainer.style.display = 'none';
-          // 如果图表还没渲染，触发重新渲染
           if (regionChart === null && regionData) {
             renderRegionChart();
           }
         } else if (view === 'map') {
           chartCanvas.style.display = 'none';
           mapContainer.style.display = 'block';
-          // 初始化地图
-          initMapView();
+          // 初始化地图 - 使用 requestAnimationFrame 确保容器布局完成
+          requestAnimationFrame(() => {
+            initMapView();
+          });
         }
       });
     });
 
-    function initMapView() {
+function initMapView() {
       const mapContainer = document.getElementById('mapContainer');
       if (!mapContainer) return;
       
-      // 如果地图已存在，不重复创建
+      // 强制设置容器尺寸，避免 Leaflet 因容器 size=0 渲染空白
+      mapContainer.style.width = '100%';
+      mapContainer.style.height = '400px';
+      
+      // 如果地图已存在，重新计算尺寸并返回
       if (mapInstance) {
-        mapInstance.invalidateSize();
+        setTimeout(() => {
+          mapInstance.invalidateSize();
+        }, 50);
         return;
       }
       
@@ -1533,7 +1540,7 @@
           worldCopyJump: true
         });
         
-        // 添加OpenStreetMap瓦片
+        // 添加高德地图瓦片
         L.tileLayer('https://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
           attribution: '&copy; <a href="https://www.amap.com/">高德地图</a>',
           maxZoom: 18
@@ -1546,8 +1553,12 @@
           addMapMarkers(regionData);
         }
         
-        // 延迟刷新地图（确保容器显示完成）
-        setTimeout(() => { mapInstance.invalidateSize(); }, 300);
+        // 多重 invalidateSize 确保地图正确渲染：
+        // 第一次 - 立即执行，让 Leaflet 读取容器尺寸
+        // 第二次 - 延迟执行，确保所有 DOM 更新完成
+        setTimeout(() => { mapInstance.invalidateSize(); }, 100);
+        setTimeout(() => { mapInstance.invalidateSize(); }, 500);
+        setTimeout(() => { mapInstance.invalidateSize(); }, 1000);
         
         regionDataInfo.textContent = '🌍 地图视图已加载';
       } catch (error) {
