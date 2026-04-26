@@ -9,10 +9,18 @@ class NewsService:
     """新闻服务类，自动抓取国内与国际热点新闻。"""
 
     DOMESTIC_TOUTIAO_URL = "https://www.toutiao.com/api/pc/feed/?category=news_hot&max_behot_time=0"
+    DOMESTIC_NETEASE_URLS = [
+        "https://news.163.com/special/00011K6L/rss_new.xml",  # 网易RSS（可能已关闭）
+        "http://rss.163.com/news/",                            # 备选RSS地址
+    ]
     INTERNATIONAL_FEED_URL = "https://feeds.npr.org/1004/rss.xml"
     INTERNATIONAL_BBC_URL = "https://feeds.bbci.co.uk/news/rss.xml"
+    INTERNATIONAL_CNN_URL = "http://rss.cnn.com/rss/edition.rss"  # CNN新闻
+    INTERNATIONAL_ZAOBAO_URL = "https://www.zaobao.com.sg/rss.xml"  # 联合早报
     INTERNATIONAL_REUTERS_URL = "https://feeds.reuters.com/Reuters/worldNews"
     DOMESTIC_WEIBO_URL = "https://rss.sina.com.cn/news/society/focus15.xml"  # Using Sina society news as proxy for Weibo social content
+    # 国际源连接超时设置（从国内访问境外源可能被限制）
+    INTERNATIONAL_TIMEOUT = 3
 
     def __init__(self):
         self.headers = {
@@ -402,6 +410,10 @@ class NewsService:
             return 20
         elif 'guardian' in source_lower or 'independent' in source_lower:
             return 18
+        elif '网易' in source_lower or '163' in source_lower:
+            return 20  # 网易新闻 - 国内重要门户
+        elif '联合早报' in source_lower or 'zaobao' in source_lower:
+            return 22  # 联合早报 - 新加坡权威华文媒体
         else:
             # 其他新闻源
             return 15
@@ -532,12 +544,16 @@ class NewsService:
         domestic = []
         international = []
 
+        # ========== 国内新闻源 ==========
+
+        # 1. 今日头条
         try:
             toutiao_data = self._fetch_json(self.DOMESTIC_TOUTIAO_URL)
             domestic = self._parse_toutiao_hot(toutiao_data, max_items=10)
         except (requests.RequestException, ValueError):
-            domestic = []
+            pass
 
+        # 2. 新浪（微博代理）
         try:
             weibo_xml = self._fetch_feed(self.DOMESTIC_WEIBO_URL)
             weibo_news = self._parse_rss(weibo_xml, max_items=10)
@@ -547,11 +563,61 @@ class NewsService:
         except requests.RequestException:
             pass
 
+        # 3. 网易新闻（尝试多个RSS地址）
+        for netease_url in self.DOMESTIC_NETEASE_URLS:
+            try:
+                netease_xml = self._fetch_feed(netease_url)
+                if netease_xml:
+                    netease_news = self._parse_rss(netease_xml, max_items=10)
+                    domestic.extend(netease_news)
+                    break  # 成功后不再尝试其他地址
+            except requests.RequestException:
+                continue
+
+        # ========== 国际新闻源（使用短超时，国内访问境外源可能受限）==========
+
+        # 1. NPR
         try:
-            international_xml = self._fetch_feed(self.INTERNATIONAL_FEED_URL)
+            international_xml = self._fetch_feed(self.INTERNATIONAL_FEED_URL, timeout=self.INTERNATIONAL_TIMEOUT)
             international = self._parse_rss(international_xml, max_items=10)
         except requests.RequestException:
-            international = []
+            pass
+
+        # 2. BBC
+        try:
+            bbc_xml = self._fetch_feed(self.INTERNATIONAL_BBC_URL, timeout=self.INTERNATIONAL_TIMEOUT)
+            if bbc_xml:
+                bbc_news = self._parse_rss(bbc_xml, max_items=10)
+                international.extend(bbc_news)
+        except requests.RequestException:
+            pass
+
+        # 3. CNN
+        try:
+            cnn_xml = self._fetch_feed(self.INTERNATIONAL_CNN_URL, timeout=self.INTERNATIONAL_TIMEOUT)
+            if cnn_xml:
+                cnn_news = self._parse_rss(cnn_xml, max_items=10)
+                international.extend(cnn_news)
+        except requests.RequestException:
+            pass
+
+        # 4. 联合早报
+        try:
+            zaobao_xml = self._fetch_feed(self.INTERNATIONAL_ZAOBAO_URL, timeout=self.INTERNATIONAL_TIMEOUT)
+            if zaobao_xml:
+                zaobao_news = self._parse_rss(zaobao_xml, max_items=10)
+                international.extend(zaobao_news)
+        except requests.RequestException:
+            pass
+
+        # 5. Reuters
+        try:
+            reuters_xml = self._fetch_feed(self.INTERNATIONAL_REUTERS_URL, timeout=self.INTERNATIONAL_TIMEOUT)
+            if reuters_xml:
+                reuters_news = self._parse_rss(reuters_xml, max_items=10)
+                international.extend(reuters_news)
+        except requests.RequestException:
+            pass
 
         # 保存到数据库
         all_news = []

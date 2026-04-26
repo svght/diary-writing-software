@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -7,8 +7,6 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.min.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
   <header class="site-header">
@@ -20,6 +18,29 @@
       </div>
     </div>
   </header>
+
+  <!-- ==================== 粘性导航栏 ==================== -->
+  <nav class="page-nav" id="pageNav">
+    <div class="page-nav-inner">
+      <button class="nav-toggle" id="navToggle" aria-label="导航菜单">☰</button>
+      <div class="nav-links" id="navLinks">
+        <a href="#section-news" class="nav-link" data-section="section-news">新闻</a>
+        <a href="#section-comments" class="nav-link" data-section="section-comments">评论</a>
+        <a href="#section-rewrite" class="nav-link" data-section="section-rewrite">改写</a>
+        <a href="#section-wordcloud" class="nav-link" data-section="section-wordcloud">词云</a>
+        <a href="#section-region" class="nav-link" data-section="section-region">地区</a>
+        <a href="#section-ai-analysis" class="nav-link" data-section="section-ai-analysis">AI分析</a>
+        <a href="#section-scoring" class="nav-link" data-section="section-scoring">评分</a>
+        <a href="#section-interest-filter" class="nav-link" data-section="section-interest-filter">过滤</a>
+        <a href="#section-opinion" class="nav-link" data-section="section-opinion">舆情</a>
+        <a href="#section-notification" class="nav-link" data-section="section-notification">通知</a>
+        <a href="#section-brief" class="nav-link" data-section="section-brief">简报</a>
+        <a href="#section-entity-graph" class="nav-link" data-section="section-entity-graph">实体</a>
+        <a href="#section-events" class="nav-link" data-section="section-events">事件</a>
+        <a href="#section-entity-miner" class="nav-link" data-section="section-entity-miner">挖掘</a>
+      </div>
+    </div>
+  </nav>
 
   <main class="page-shell">
     <section class="hero-panel">
@@ -53,7 +74,7 @@
       </div>
     </section>
 
-    <section class="news-grid">
+    <section class="news-grid" id="section-news">
       <article class="news-card news-highlight">
         <div class="card-header news-header">
           <span>国内热点新闻</span>
@@ -278,7 +299,7 @@
     </section>
 
     <!-- 多类型评论生成（强化） -->
-    <section class="visualization-grid">
+    <section class="visualization-grid" id="section-comments">
       <article class="visualization-card">
         <div class="card-header">
           <span>🤖 AI 多类型评论生成</span>
@@ -346,7 +367,7 @@
     </section>
 
     <!-- 新闻改写（新增） -->
-    <section class="visualization-grid">
+    <section class="visualization-grid" id="section-rewrite">
       <article class="visualization-card">
         <div class="card-header">
           <span>✏️ AI 新闻改写编辑</span>
@@ -408,7 +429,7 @@
     </section>
 
     <!-- 词云图可视化 -->
-    <section class="visualization-grid">
+    <section class="visualization-grid" id="section-wordcloud">
       <article class="visualization-card">
         <div class="card-header">
           <span>热点关键词词云</span>
@@ -442,7 +463,7 @@
             <div class="skeleton" style="height: 100%; width: 100%; border-radius: 16px;"></div>
           </div>
           <div id="wordCloudLoading">正在加载词云数据...</div>
-          <div id="wordCloudContainer" style="display:none; width:100%; height:340px;"></div>
+        <div id="wordCloudContainer" style="display:none; width:100%; height:340px; overflow:hidden;"></div>
         </div>
 
         <div class="word-cloud-statistics">
@@ -467,7 +488,7 @@
     </section>
 
     <!-- 地区分布可视化 -->
-    <section class="visualization-grid">
+    <section class="visualization-grid" id="section-region">
       <article class="visualization-card">
         <div class="card-header">
           <span>新闻地区分布分析</span>
@@ -503,13 +524,7 @@
           </div>
           <div id="regionChartLoading">正在加载图表数据...</div>
 
-          <div class="view-toggle">
-            <button class="toggle-btn active" data-view="chart">图表视图</button>
-            <button class="toggle-btn" data-view="map">地图视图</button>
-          </div>
-
           <canvas id="regionChart" style="display:none;"></canvas>
-          <div id="mapContainer" style="display:none; width:100%; height:auto; min-height:300px;"></div>
         </div>
         
         <div class="region-statistics">
@@ -598,8 +613,196 @@
         </div>
       </article>
     </section>
+
+    <!-- ==================== AI 热点深度分析（新增） ==================== -->
+    <section class="visualization-grid" id="section-ai-analysis">
+      <article class="visualization-card visualization-card-full">
+        <div class="card-header">
+          <span>🧠 AI 热点深度分析</span>
+          <span class="card-header-hint">5模块 · 趋势 · 舆情 · 信号</span>
+        </div>
+        
+        <div class="visualization-controls">
+          <div class="vis-control-row">
+            <button id="aiAnalysisBtn" class="button button-primary">🚀 运行深度分析</button>
+            <button id="aiAnalysisRefreshBtn" class="button button-secondary" style="display:none;">🔄 强制刷新（跳过缓存）</button>
+            <span class="vis-info" id="aiAnalysisStatus">准备就绪</span>
+          </div>
+          <div class="vis-control-row">
+            <span class="vis-info" id="aiAnalysisMeta"></span>
+          </div>
+        </div>
+        
+        <div class="comment-results-container">
+          <div class="loading-overlay" id="aiAnalysisLoading">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">AI 正在深度分析新闻...</div>
+          </div>
+          
+          <div class="ai-analysis-results" id="aiAnalysisResults">
+            <div class="no-results">点击「运行深度分析」按钮，AI 将对当前新闻进行 5 大模块深度研判</div>
+          </div>
+        </div>
+        
+        <div class="ai-analysis-modules" id="aiAnalysisModules" style="display:none;">
+          <div class="vis-control-row" style="margin-bottom:8px;">
+            <button class="module-toggle-btn active" data-module="0">📊 核心热点态势</button>
+            <button class="module-toggle-btn" data-module="1">🔥 舆论风向争议</button>
+            <button class="module-toggle-btn" data-module="2">📡 异动与弱信号</button>
+            <button class="module-toggle-btn" data-module="3">👥 核心实体观点</button>
+            <button class="module-toggle-btn" data-module="4">🎯 研判策略建议</button>
+          </div>
+          <div id="aiModuleContent" class="ai-module-content"></div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ==================== 新闻六维评分（新增） ==================== -->
+    <section class="visualization-grid" id="section-scoring">
+      <article class="visualization-card">
+        <div class="card-header">
+          <span>📊 新闻六维评分</span>
+          <span class="card-header-hint">时效 · 权威 · 深度 · 争议 · 实体 · 情感</span>
+        </div>
+        
+        <div class="visualization-controls">
+          <div class="vis-control-row">
+            <select id="scoreNewsSelect" class="control-input" style="flex:1;">
+              <option value="">选择新闻进行评分...</option>
+            </select>
+            <button id="scoreNewsBtn" class="button button-primary">📊 评分</button>
+            <button id="scoreBatchBtn" class="button button-secondary">批量评分</button>
+          </div>
+          <div class="vis-control-row">
+            <span class="vis-info" id="scoreStatus">准备就绪</span>
+          </div>
+        </div>
+        
+        <div class="chart-container" style="height:300px;">
+          <div id="scoreChartLoading" style="display:flex;align-items:center;justify-content:center;height:100%;color:#6b7280;">选择新闻后点击"评分"查看雷达图</div>
+          <canvas id="scoreRadarChart" style="display:none;"></canvas>
+        </div>
+        
+        <div id="scoreDetails" class="score-details" style="display:none;">
+          <div class="score-total">
+            <span class="score-total-label">综合评分</span>
+            <span class="score-total-value" id="scoreTotalValue">--</span>
+          </div>
+          <div class="score-dimensions" id="scoreDimensionList"></div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ==================== 兴趣过滤（Phase 2 新增） ==================== -->
+    <section class="visualization-grid" id="section-interest-filter">
+      <article class="visualization-card visualization-card-full">
+        <div class="card-header">
+          <span>🎯 AI 兴趣过滤</span>
+          <span class="card-header-hint">个性化 · 智能匹配</span>
+        </div>
+        <div class="visualization-controls">
+          <div class="vis-control-row">
+            <button id="refreshFilterBtn" class="button button-primary">🔄 刷新过滤</button>
+            <span class="vis-info" id="filterStatus">准备就绪</span>
+          </div>
+        </div>
+        <div id="filterResults" style="padding:4px 0;">
+          <div class="no-results">点击"刷新过滤"查看兴趣分类结果</div>
+        </div>
+        <div class="entity-stats" id="filterStats"></div>
+      </article>
+    </section>
+
+    <!-- ==================== 舆情监控（Phase 2 新增） ==================== -->
+    <section class="visualization-grid" id="section-opinion">
+      <article class="visualization-card visualization-card-full">
+        <div class="card-header">
+          <span>🚨 舆情异常监控</span>
+          <span class="card-header-hint">情感 · 热度 · 实体 · 话题 · 共振</span>
+        </div>
+        <div class="visualization-controls">
+          <div class="vis-control-row">
+            <button id="opinionAnalyzeBtn" class="button button-primary">🔍 执行舆情分析</button>
+            <button id="opinionRefreshBtn" class="button button-secondary" style="display:none;">🔄 强制分析</button>
+            <select id="opinionLevelFilter" class="control-input" style="width:120px;">
+              <option value="all">全部级别</option>
+              <option value="critical">🚨 严重</option>
+              <option value="warning">⚠️ 警告</option>
+              <option value="info">ℹ️ 信息</option>
+            </select>
+            <select id="opinionTypeFilter" class="control-input" style="width:130px;">
+              <option value="all">全部类型</option>
+              <option value="sentiment">情感异常</option>
+              <option value="hotness">热度异常</option>
+              <option value="entity">实体异常</option>
+              <option value="topic">话题异动</option>
+              <option value="cross_platform">跨平台共振</option>
+            </select>
+          </div>
+          <div class="vis-control-row">
+            <span class="vis-info" id="opinionStatus">准备就绪</span>
+          </div>
+        </div>
+        <div id="opinionAlertContainer" style="min-height:60px;">
+          <div class="no-results" id="opinionNoResults">点击"执行舆情分析"检测异常信号</div>
+          <div id="opinionAlertList" style="display:none;"></div>
+        </div>
+        <div class="entity-stats" id="opinionStats"></div>
+      </article>
+    </section>
+
+    <!-- ==================== 通知管理（Phase 2 新增） ==================== -->
+    <section class="visualization-grid" id="section-notification">
+      <article class="visualization-card">
+        <div class="card-header">
+          <span>📢 通知通道管理</span>
+          <span class="card-header-hint">多通道推送</span>
+        </div>
+        <div class="visualization-controls">
+          <div class="vis-control-row">
+            <button id="refreshNotifyBtn" class="button button-secondary">🔄 刷新状态</button>
+            <button id="sendTestNotifyBtn" class="button button-primary">📨 发送测试通知</button>
+          </div>
+        </div>
+        <div id="notifyChannelList">
+          <div class="no-results" style="padding:16px;">点击"刷新状态"查看通道</div>
+        </div>
+        <div id="notifyHistory" style="margin-top:8px;max-height:200px;overflow-y:auto;"></div>
+      </article>
+    </section>
+
+    <!-- ==================== 每日简报与Widget（Phase 3/4 新增） ==================== -->
+    <section class="visualization-grid" id="section-brief">
+      <article class="visualization-card visualization-card-full">
+        <div class="card-header">
+          <span>📅 每日简报 & Widget 管理</span>
+          <span class="card-header-hint">日报 · 配置</span>
+        </div>
+        <div class="visualization-controls">
+          <div class="vis-control-row">
+            <button id="genBriefBtn" class="button button-primary">📰 生成今日简报</button>
+            <span class="vis-info" id="briefStatus">准备就绪</span>
+          </div>
+        </div>
+        <div id="briefResults" style="padding:4px 0;">
+          <div class="no-results">点击"生成今日简报"查看</div>
+        </div>
+        <div class="vis-control-row" style="margin-top:12px;">
+          <span style="font-size:13px;color:#6b7280;font-weight:500;">Widget 开关：</span>
+          <div id="widgetToggles" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
+        <div class="vis-control-row" style="margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb;">
+          <span style="font-size:13px;color:#6b7280;font-weight:500;">⏱ 智能调度：</span>
+          <span class="vis-info" id="schedulerStatus">未启动</span>
+          <button id="schedulerStartBtn" class="button button-primary button-small">▶ 启动</button>
+          <button id="schedulerStopBtn" class="button button-secondary button-small">⏹ 停止</button>
+          <button id="schedulerRefreshBtn" class="button button-secondary button-small">🔄 刷新</button>
+        </div>
+      </article>
+    </section>
+
     <!-- ==================== 实体关系图谱 ==================== -->
-    <section class="visualization-grid">
+    <section class="visualization-grid" id="section-entity-graph">
       <article class="visualization-card visualization-card-full">
         <div class="card-header">
           <span>🔗 新闻实体关系图谱</span>
@@ -671,7 +874,7 @@
     </section>
 
     <!-- ==================== 事件追踪 ==================== -->
-    <section class="visualization-grid">
+    <section class="visualization-grid" id="section-events">
       <article class="visualization-card">
         <div class="card-header">
           <span>📊 事件追踪与关联</span>
@@ -730,7 +933,7 @@
     </section>
 
     <!-- ==================== 实体深度挖掘 ==================== -->
-    <section class="visualization-grid">
+    <section class="visualization-grid" id="section-entity-miner">
       <article class="visualization-card visualization-card-full">
         <div class="card-header">
           <span>🔍 实体深度挖掘</span>
@@ -739,7 +942,8 @@
         
         <div class="visualization-controls">
           <div class="vis-control-row">
-            <input type="text" id="minerEntityName" class="control-input" placeholder="输入实体名进行深度挖掘（如：习近平、拜登、华为）..." style="flex:1;">
+            <input type="text" id="minerEntityName" class="control-input" placeholder="输入实体名进行深度挖掘（如：习近平、拜登、华为）..." style="flex:1;" list="minerEntitySuggestions" autocomplete="off">
+            <datalist id="minerEntitySuggestions"></datalist>
             <button id="minerAnalyzeBtn" class="button button-primary">深度分析</button>
           </div>
         </div>
@@ -791,6 +995,30 @@
   </footer>
 
   <script>
+    // ==================== 全局 fetch 封装（防超时/增强错误提示） ====================
+    async function safeFetch(url, options = {}, timeoutMs = 30000) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (!response.ok) {
+          let errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+          try {
+            const errData = await response.json();
+            if (errData.error) errorMsg = errData.error;
+          } catch (e) {}
+          throw new Error(errorMsg);
+        }
+        return response;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          throw new Error(`请求超时（${timeoutMs/1000}秒），请重试`);
+        }
+        throw error; // 保持原始错误
+      }
+    }
     // ==================== 基本元素引用 ====================
     const citySelect = document.getElementById('citySelect');
     const weatherCity = document.getElementById('weatherCity');
@@ -992,7 +1220,7 @@
       const skeleton = document.getElementById(`${type}NewsSkeleton`);
 
       // 显示加载状态
-      if (!keyword && !timeRange && !sentiment && !source) {
+      if (!keyword && (!timeRange || timeRange === 'all') && (!sentiment || sentiment === 'all') && !source) {
         // 没有搜索条件时使用本地数据
         loadingEl.textContent = '';
         if (listEl) listEl.style.display = 'grid';
@@ -1110,7 +1338,7 @@
       }
     }
 
-    const PAGE_SIZE = 10;
+    const PAGE_SIZE = 5;
 
     function renderSearchResults(container, list, keyword, loadingElement, page) {
       if (!container) return;
@@ -1811,14 +2039,29 @@
       }
     }
 
-    // 选择新闻时自动填充手动输入框
-    rewriteNewsSelect.addEventListener('change', () => {
+    // 选择新闻时自动填充手动输入框，内容为空时从后端获取
+    rewriteNewsSelect.addEventListener('change', async () => {
       const val = rewriteNewsSelect.value;
       if (val) {
         try {
           const data = JSON.parse(val);
           rewriteManualTitle.value = data.title;
-          rewriteManualContent.value = data.content;
+          if (data.content && data.content.trim()) {
+            rewriteManualContent.value = data.content;
+          } else {
+            rewriteManualContent.value = '正在获取内容...';
+            try {
+              const resp = await fetch(`/api/news/search-content?title=${encodeURIComponent(data.title)}`);
+              const result = await resp.json();
+              if (result.success && result.news && result.news.content) {
+                rewriteManualContent.value = result.news.content;
+              } else {
+                rewriteManualContent.value = '';
+              }
+            } catch (e) {
+              rewriteManualContent.value = '';
+            }
+          }
         } catch (e) {}
       }
     });
@@ -2146,188 +2389,8 @@
     regionChartLimit.addEventListener('change', loadRegionData);
     refreshRegionData.addEventListener('click', loadRegionData);
 
-    // ==================== 地图视图切换 ====================
-    let mapInstance = null;
-    let mapMarkersGroup = null;
-
-    // 添加地图视图切换按钮样式
-    const toggleStyle = document.createElement('style');
-    toggleStyle.textContent = `
-      .view-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
-      .toggle-btn { padding: 8px 16px; border: 1px solid #d1d5db; background: #f9fafb; border-radius: 8px; cursor: pointer; font-size: 14px; color: #475569; }
-      .toggle-btn:hover { background: #f3f4f6; }
-      .toggle-btn.active { background: #0078d4; color: #ffffff; border-color: #0078d4; }
-    `;
-    document.head.appendChild(toggleStyle);
-
-    // 绑定视图切换按钮
-    document.querySelectorAll('.toggle-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const view = this.dataset.view;
-        // 切换按钮激活状态
-        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        // 切换显示
-        const chartCanvas = document.getElementById('regionChart');
-        const mapContainer = document.getElementById('mapContainer');
-        const parentContainer = document.querySelector('.chart-container');
-        if (view === 'chart') {
-          chartCanvas.style.display = 'block';
-          mapContainer.style.display = 'none';
-          // 恢复父容器高度为固定400px（Chart.js需要固定高度才能正确渲染）
-          if (parentContainer) {
-            parentContainer.style.height = '400px';
-            parentContainer.style.minHeight = '400px';
-          }
-          if (regionChart === null && regionData) {
-            renderRegionChart();
-          }
-        } else if (view === 'map') {
-          chartCanvas.style.display = 'none';
-          mapContainer.style.display = 'block';
-          // 地图视图下，父容器完全由内容撑开，不设固定高度
-          if (parentContainer) {
-            parentContainer.style.height = 'auto';
-            parentContainer.style.minHeight = 'auto';
-          }
-          // 初始化地图 - 使用 requestAnimationFrame 确保容器布局完成
-          requestAnimationFrame(() => {
-            initMapView();
-          });
-        }
-      });
-    });
-
-function initMapView() {
-      const mapContainer = document.getElementById('mapContainer');
-      if (!mapContainer) return;
-      
-      // 临时设固定高度400px，确保Leaflet初始化时容器有明确尺寸
-      // 等地图瓦片加载完成后，再移除固定高度让父容器由内容撑开
-      mapContainer.style.width = '100%';
-      mapContainer.style.height = '400px';
-      
-      // 如果地图已存在，重新计算尺寸并返回
-      if (mapInstance) {
-        setTimeout(() => {
-          mapInstance.invalidateSize();
-        }, 50);
-        return;
-      }
-      
-      try {
-        // 使用Leaflet创建地图
-        mapInstance = L.map('mapContainer', {
-          center: [20, 0],
-          zoom: 2,
-          minZoom: 2,
-          maxZoom: 18,
-          worldCopyJump: true
-        });
-        
-        // 添加高德地图瓦片
-        L.tileLayer('https://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
-          attribution: '&copy; <a href="https://www.amap.com/">高德地图</a>',
-          maxZoom: 18
-        }).addTo(mapInstance);
-        
-        mapMarkersGroup = L.featureGroup().addTo(mapInstance);
-        
-        // 加载数据并添加标记
-        if (regionData && regionData.countries && regionData.counts) {
-          addMapMarkers(regionData);
-        }
-        
-        // 第一次：等地图瓦片加载后，移除固定高度，恢复auto由内容撑开
-        setTimeout(() => { 
-          mapInstance.invalidateSize(); 
-          mapContainer.style.height = 'auto';
-        }, 200);
-        // 第二次：进一步重算
-        setTimeout(() => { mapInstance.invalidateSize(); }, 600);
-        // 第三次：最终重算（地图瓦片全部加载完成）
-        setTimeout(() => { mapInstance.invalidateSize(); }, 1200);
-        
-        regionDataInfo.textContent = '🌍 地图视图已加载';
-      } catch (error) {
-        console.error('地图初始化失败:', error);
-        mapContainer.innerHTML = `<div style="padding:20px;text-align:center;color:#ef4444;">地图加载失败: ${error.message}</div>`;
-      }
-    }
-
-    function addMapMarkers(regionData) {
-      if (!mapInstance || !mapMarkersGroup) return;
-      
-      // 国家坐标映射（部分常见国家）
-      const countryCoords = {
-        '中国': [35.86, 104.19], '美国': [37.09, -95.71], '日本': [36.20, 138.25],
-        '韩国': [35.91, 127.77], '英国': [55.38, -3.44], '法国': [46.23, 2.21],
-        '德国': [51.17, 10.45], '意大利': [41.87, 12.57], '加拿大': [56.13, -106.35],
-        '澳大利亚': [-25.27, 133.78], '印度': [20.59, 78.96], '俄罗斯': [61.52, 105.32],
-        '巴西': [-14.24, -51.93], '南非': [-30.56, 22.94], '墨西哥': [23.63, -102.55],
-        '西班牙': [40.46, -3.75], '荷兰': [52.13, 5.29], '瑞士': [46.82, 8.23],
-        '瑞典': [60.13, 18.64], '挪威': [60.47, 8.47], '丹麦': [56.26, 9.50],
-        '芬兰': [61.92, 25.75], '波兰': [51.92, 19.15], '土耳其': [38.96, 35.24],
-        '伊朗': [32.43, 53.69], '沙特阿拉伯': [23.89, 45.08], '阿联酋': [23.42, 53.85],
-        '以色列': [31.05, 34.85], '埃及': [26.82, 30.80], '尼日利亚': [9.08, 8.68],
-        '肯尼亚': [-0.02, 37.91], '阿根廷': [-38.42, -63.62], '智利': [-35.68, -71.54],
-        '新加坡': [1.35, 103.82], '马来西亚': [4.21, 101.98], '印度尼西亚': [-0.79, 113.92],
-        '泰国': [15.87, 100.99], '越南': [14.06, 108.28], '菲律宾': [12.88, 121.77],
-        '巴基斯坦': [30.38, 69.35], '孟加拉国': [23.68, 90.36], '哈萨克斯坦': [48.02, 66.92],
-        '乌克兰': [48.38, 31.17], '罗马尼亚': [45.94, 24.97], '希腊': [39.07, 21.82],
-        '葡萄牙': [39.40, -8.22], '比利时': [50.50, 4.47], '奥地利': [47.52, 14.55],
-        '捷克': [49.82, 15.47], '匈牙利': [47.16, 19.50], '爱尔兰': [53.14, -8.24],
-        '新西兰': [-40.90, 174.89], '古巴': [21.52, -77.78], '朝鲜': [40.34, 127.51],
-        '蒙古': [46.86, 103.85], '阿富汗': [33.94, 67.71], '伊拉克': [33.22, 43.68],
-        '叙利亚': [34.80, 39.00], '也门': [15.55, 48.52], '阿曼': [21.00, 57.00],
-        '卡塔尔': [25.35, 51.18], '科威特': [29.31, 47.48], '巴林': [26.04, 50.55],
-      };
-      
-      mapMarkersGroup.clearLayers();
-      
-      const maxCount = Math.max(...regionData.counts);
-      
-      regionData.countries.forEach((country, index) => {
-        const count = regionData.counts[index];
-        const coords = countryCoords[country];
-        
-        if (coords) {
-          // 根据新闻数量计算标记大小
-          const radius = Math.max(8, Math.min(30, 8 + (count / maxCount) * 22));
-          const opacity = 0.4 + (count / maxCount) * 0.6;
-          
-          const marker = L.circleMarker(coords, {
-            radius: radius,
-            fillColor: '#ef4444',
-            color: '#dc2626',
-            weight: 2,
-            opacity: 1,
-            fillOpacity: opacity
-          });
-          
-          marker.bindPopup(`
-            <b>${country}</b><br>
-            新闻数量: ${count} 篇
-          `);
-          
-          marker.on('click', () => {
-            selectChartItem(country, count);
-          });
-          
-          mapMarkersGroup.addLayer(marker);
-        }
-      });
-      
-      // 如果有点，自动调整视野
-      if (mapMarkersGroup.getLayers().length > 0) {
-        const bounds = mapMarkersGroup.getBounds();
-        if (bounds.isValid()) {
-          mapInstance.fitBounds(bounds, { padding: [30, 30], maxZoom: 4 });
-        }
-      }
-    }
-
     // ==================== 词云图渲染 ====================
+
     const wordCloudContainer = document.getElementById('wordCloudContainer');
     const wordCloudType = document.getElementById('wordCloudType');
     const refreshWordCloud = document.getElementById('refreshWordCloud');
@@ -2444,8 +2507,8 @@ function initMapView() {
           const safeMax = Math.min(canvasWidth, canvasHeight) / 10;
           WordCloud(canvas, {
             list: words,
-            gridSize: 12,
-            weightFactor: function(w) { return Math.min(Math.pow(w / maxWeight, 0.6) * 18 + 8, safeMax); },
+            gridSize: 16,
+            weightFactor: function(w) { return Math.min(Math.pow(w / maxWeight, 0.6) * 10 + 4, safeMax); },
             fontFamily: 'Microsoft YaHei, sans-serif',
             color: function(word, weight) {
               const colors = ['#1e40af', '#3b82f6', '#60a5fa', '#7c3aed', '#8b5cf6', '#a78bfa', '#059669', '#10b981', '#34d399', '#d97706', '#f59e0b', '#fbbf24', '#dc2626', '#ef4444', '#f87171', '#db2777', '#ec4899', '#f472b6'];
@@ -2731,41 +2794,18 @@ function initMapView() {
     // 导出地区分布图
     document.getElementById('exportRegionChart')?.addEventListener('click', () => {
       const format = document.getElementById('regionChartExportFormat')?.value || 'png';
-      
-      // 检查当前是图表视图还是地图视图
-      const mapContainer = document.getElementById('mapContainer');
       const regionChartCanvas = document.getElementById('regionChart');
       
-      if (regionChartCanvas && regionChartCanvas.style.display !== 'none') {
-        // 图表视图 - 导出Chart.js图表
-        if (regionChart) {
-          const canvas = regionChart.canvas;
-          if (format === 'png') {
-            const link = document.createElement('a');
-            link.download = `地区分布图.png`;
-            link.href = canvas.toDataURL('image/png');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          } else {
-            const link = document.createElement('a');
-            link.download = `地区分布图.png`;
-            link.href = canvas.toDataURL('image/png');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          }
-          saveOriginalStatusText('regionDataInfo');
-          document.getElementById('regionDataInfo').textContent = '✅ 地区分布图已导出';
-          setTimeout(() => { document.getElementById('regionDataInfo').textContent = document.getElementById('regionDataInfo').dataset.originalText || ''; }, 3000);
-        } else {
-          saveOriginalStatusText('regionDataInfo');
-          document.getElementById('regionDataInfo').textContent = '⚠️ 图表尚未加载';
-        }
-      } else if (mapContainer && mapContainer.style.display !== 'none') {
-        // 地图视图 - 导出Leaflet地图
+      if (regionChartCanvas && regionChartCanvas.style.display !== 'none' && regionChart) {
+        const canvas = regionChart.canvas;
+        const link = document.createElement('a');
+        link.download = `地区分布图.png`;
+        link.href = canvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         saveOriginalStatusText('regionDataInfo');
-        document.getElementById('regionDataInfo').textContent = '⚠️ 地图视图导出请切换到图表视图后重试';
+        document.getElementById('regionDataInfo').textContent = '✅ 地区分布图已导出';
         setTimeout(() => { document.getElementById('regionDataInfo').textContent = document.getElementById('regionDataInfo').dataset.originalText || ''; }, 3000);
       } else {
         saveOriginalStatusText('regionDataInfo');
@@ -2844,6 +2884,7 @@ function initMapView() {
       await origLoad();
       setTimeout(() => {
         updateCommentNewsSelect();
+        updateScoreNewsSelect();
       }, 100);
     };
 
@@ -2867,7 +2908,7 @@ function initMapView() {
       info.textContent = '正在分析新闻并构建实体图谱...';
       
       try {
-        const response = await fetch('/api/entity-graph/process', { method: 'POST' });
+        const response = await safeFetch('/api/entity-graph/process', { method: 'POST' }, 60000);
         const data = await response.json();
         if (data.success) {
           info.textContent = data.message || '图谱更新完成';
@@ -2946,7 +2987,7 @@ function initMapView() {
       const angleStep = (2 * Math.PI) / nodes.length;
       nodes.forEach((node, i) => {
         const angle = angleStep * i - Math.PI / 2;
-        const radius = Math.min(width, height) * 0.35;
+        const radius = Math.min(width, height) * 0.28;
         nodePositions[node.id] = {
           x: centerX + radius * Math.cos(angle),
           y: centerY + radius * Math.sin(angle),
@@ -3041,7 +3082,7 @@ function initMapView() {
         // 绘制节点
         for (const id of Object.keys(nodePositions)) {
           const node = nodePositions[id];
-          const size = node.size || 15;
+          const size = node.size || 10;
           
           // 节点颜色
           let color = '#3b82f6';
@@ -3066,14 +3107,14 @@ function initMapView() {
           
           // 文字
           ctx.fillStyle = '#1e293b';
-          ctx.font = '12px Microsoft YaHei, sans-serif';
+          ctx.font = '10px Microsoft YaHei, sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           
           // 截断长文本
           let label = node.label || id;
           if (label.length > 6) label = label.substring(0, 5) + '..';
-          ctx.fillText(label, node.x, node.y + size + 14);
+          ctx.fillText(label, node.x, node.y + size + 10);
         }
         
         // 图例
@@ -3352,7 +3393,7 @@ function initMapView() {
       info.textContent = '加载事件数据...';
       
       try {
-        const response = await fetch(`/api/events/list?status=${status}&limit=30`);
+        const response = await safeFetch(`/api/events/list?status=${status}&limit=30`, {}, 30000);
         const data = await response.json();
         
         if (data.success && data.events && data.events.length > 0) {
@@ -3915,6 +3956,368 @@ function initMapView() {
       if (e.key === 'Enter') document.getElementById('minerAnalyzeBtn').click();
     });
 
+    // 实体深度挖掘 - 自动补全建议（输入时从后端获取实体列表）
+    let minerSearchTimer = null;
+    document.getElementById('minerEntityName').addEventListener('input', function() {
+      clearTimeout(minerSearchTimer);
+      const keyword = this.value.trim();
+      const datalist = document.getElementById('minerEntitySuggestions');
+      
+      if (keyword.length < 1) {
+        datalist.innerHTML = '';
+        return;
+      }
+      
+      minerSearchTimer = setTimeout(async () => {
+        try {
+          const response = await fetch(`/api/entity-miner/search?keyword=${encodeURIComponent(keyword)}`);
+          const data = await response.json();
+          
+          if (data.success && data.results && data.results.length > 0) {
+            datalist.innerHTML = data.results.map(r => {
+              const typeLabel = r.type === 'person' ? '人物' : r.type === 'country' ? '地点' : r.type === 'organization' ? '组织' : '事件';
+              const count = r.mention_count || r.count || 0;
+              return `<option value="${r.name}">${typeLabel} - 出现${count}次</option>`;
+            }).join('');
+          } else {
+            datalist.innerHTML = '';
+          }
+        } catch (e) {
+          // 静默失败
+        }
+      }, 300);
+    });
+
+    // ==================== AI 热点深度分析（新增） ====================
+    const aiAnalysisBtn = document.getElementById('aiAnalysisBtn');
+    const aiAnalysisRefreshBtn = document.getElementById('aiAnalysisRefreshBtn');
+    const aiAnalysisStatus = document.getElementById('aiAnalysisStatus');
+    const aiAnalysisMeta = document.getElementById('aiAnalysisMeta');
+    const aiAnalysisLoading = document.getElementById('aiAnalysisLoading');
+    const aiAnalysisResults = document.getElementById('aiAnalysisResults');
+    const aiAnalysisModules = document.getElementById('aiAnalysisModules');
+    const aiModuleContent = document.getElementById('aiModuleContent');
+
+    let currentAiAnalysis = null;
+
+    aiAnalysisBtn.addEventListener('click', async function() {
+      await runAiAnalysis(false);
+    });
+
+    aiAnalysisRefreshBtn.addEventListener('click', async function() {
+      await runAiAnalysis(true);
+    });
+
+    async function runAiAnalysis(force) {
+      aiAnalysisLoading.style.display = 'flex';
+      aiAnalysisBtn.disabled = true;
+      aiAnalysisStatus.textContent = 'AI 正在深度分析...';
+      aiAnalysisResults.innerHTML = '';
+      aiAnalysisModules.style.display = 'none';
+
+      try {
+        const url = force ? '/api/trend/ai-analysis?force=true' : '/api/trend/ai-analysis';
+        // AI分析可能耗时较长（DeepSeek API约8秒），设置60秒超时
+        const response = await safeFetch(url, {}, 60000);
+        const data = await response.json();
+
+        aiAnalysisLoading.style.display = 'none';
+        aiAnalysisBtn.disabled = false;
+
+        if (data.success && data.analysis) {
+          currentAiAnalysis = data.analysis;
+          
+          // 显示元信息
+          const genTime = data.generation_time ? data.generation_time.toFixed(1) : 'N/A';
+          const cached = data.cached ? '📦 缓存' : '✨ 新生成';
+          aiAnalysisMeta.textContent = `📰 ${data.news_count}条新闻 | ${cached} | ${data.model || 'AI'} | ${genTime}s`;
+          aiAnalysisStatus.textContent = '✅ AI 深度分析完成';
+          
+          // 隐藏提示，显示模块标签
+          aiAnalysisResults.innerHTML = '';
+          aiAnalysisModules.style.display = 'block';
+          
+          // 默认显示第一个模块
+          showAiModule(0);
+          
+          // 显示强制刷新按钮
+          aiAnalysisRefreshBtn.style.display = 'inline-block';
+        } else {
+          aiAnalysisStatus.textContent = `❌ 分析失败: ${data.error || '未知错误'}`;
+          aiAnalysisResults.innerHTML = `<div class="no-results" style="color:#ef4444;">分析失败: ${data.error || '请检查 DeepSeek API 配置'}</div>`;
+        }
+      } catch (error) {
+        aiAnalysisLoading.style.display = 'none';
+        aiAnalysisBtn.disabled = false;
+        aiAnalysisStatus.textContent = `❌ 请求失败: ${error.message}`;
+        aiAnalysisResults.innerHTML = `<div class="no-results" style="color:#ef4444;">请求失败: ${error.message}</div>`;
+      }
+    }
+
+    // 模块切换按钮
+    document.querySelectorAll('.module-toggle-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.module-toggle-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        showAiModule(parseInt(this.dataset.module));
+      });
+    });
+
+    const moduleNames = ['core_trends', 'sentiment_controversy', 'signals', 'entity_opinions', 'outlook_strategy'];
+    const moduleLabels = ['📊 核心热点态势', '🔥 舆论风向争议', '📡 异动与弱信号', '👥 核心实体观点', '🎯 研判策略建议'];
+    const moduleIcons = ['📊', '🔥', '📡', '👥', '🎯'];
+
+    function showAiModule(index) {
+      if (!currentAiAnalysis) return;
+      
+      const key = moduleNames[index];
+      let content = currentAiAnalysis[key] || '暂无数据';
+      
+      // 格式化内容 - 将 \n 转换为 <br>
+      content = content.replace(/\n/g, '<br>');
+      
+      // 高亮关键部分
+      content = content
+        .replace(/【([^】]+)】/g, '<span class="ai-module-tag">【$1】</span>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      
+      aiModuleContent.innerHTML = `
+        <div class="ai-module-card">
+          <div class="ai-module-header">${moduleLabels[index]}</div>
+          <div class="ai-module-body">${content}</div>
+        </div>
+      `;
+    }
+
+    // ==================== 新闻六维评分（新增） ====================
+    const scoreNewsSelect = document.getElementById('scoreNewsSelect');
+    const scoreNewsBtn = document.getElementById('scoreNewsBtn');
+    const scoreBatchBtn = document.getElementById('scoreBatchBtn');
+    const scoreStatus = document.getElementById('scoreStatus');
+    const scoreChartLoading = document.getElementById('scoreChartLoading');
+    const scoreRadarCanvas = document.getElementById('scoreRadarChart');
+    const scoreDetails = document.getElementById('scoreDetails');
+    const scoreTotalValue = document.getElementById('scoreTotalValue');
+    const scoreDimensionList = document.getElementById('scoreDimensionList');
+    
+    let scoreRadarChartInstance = null;
+
+    function updateScoreNewsSelect() {
+      scoreNewsSelect.innerHTML = '<option value="">选择新闻进行评分...</option>';
+      if (allDomesticNews && allDomesticNews.length > 0) {
+        const group = document.createElement('optgroup');
+        group.label = '国内新闻';
+        allDomesticNews.slice(0, 15).forEach((news, index) => {
+          const option = document.createElement('option');
+          option.value = JSON.stringify({
+            title: news.title,
+            content: news.content || news.description || '',
+            source: news.source || '',
+            hot_score: news.hot_score || 0
+          });
+          option.textContent = `${news.title.substring(0, 40)}${news.title.length > 40 ? '...' : ''} (${news.source || '未知'})`;
+          group.appendChild(option);
+        });
+        scoreNewsSelect.appendChild(group);
+      }
+      if (allInternationalNews && allInternationalNews.length > 0) {
+        const group = document.createElement('optgroup');
+        group.label = '国际新闻';
+        allInternationalNews.slice(0, 15).forEach((news, index) => {
+          const option = document.createElement('option');
+          option.value = JSON.stringify({
+            title: news.title,
+            content: news.content || news.description || '',
+            source: news.source || '',
+            hot_score: news.hot_score || 0
+          });
+          option.textContent = `${news.title.substring(0, 40)}${news.title.length > 40 ? '...' : ''} (${news.source || '未知'})`;
+          group.appendChild(option);
+        });
+        scoreNewsSelect.appendChild(group);
+      }
+    }
+
+    scoreNewsBtn.addEventListener('click', async function() {
+      const selected = scoreNewsSelect.value;
+      if (!selected) {
+        scoreStatus.textContent = '请先选择一条新闻';
+        return;
+      }
+      
+      try {
+        const newsData = JSON.parse(selected);
+        scoreStatus.textContent = '正在评分...';
+        scoreChartLoading.style.display = 'flex';
+        scoreChartLoading.textContent = '正在计算六维评分...';
+        scoreRadarCanvas.style.display = 'none';
+        scoreDetails.style.display = 'none';
+        
+        const response = await safeFetch('/api/news/score', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newsData)
+        }, 30000);
+        const result = await response.json();
+        
+        if (result.success) {
+          scoreStatus.textContent = `✅ 评分完成 | 综合评分: ${result.total_score}/100 | ${newsData.title.substring(0, 30)}`;
+          renderScoreRadar(result);
+        } else {
+          scoreStatus.textContent = `❌ 评分失败: ${result.error}`;
+        }
+      } catch (error) {
+        scoreStatus.textContent = `❌ 请求失败: ${error.message}`;
+      }
+    });
+
+    scoreBatchBtn.addEventListener('click', async function() {
+      scoreStatus.textContent = '正在批量评分所有新闻...';
+      scoreChartLoading.style.display = 'flex';
+      scoreChartLoading.textContent = '正在批量评分...';
+      scoreRadarCanvas.style.display = 'none';
+      scoreDetails.style.display = 'none';
+      
+      try {
+        const response = await safeFetch('/api/news/score/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ news_items: [] })
+        }, 30000);
+        const result = await response.json();
+        
+        if (result.success && result.scored_news) {
+          scoreStatus.textContent = `✅ 批量评分完成: ${result.total}条新闻已评分`;
+          
+          // 显示排名靠前的新闻
+          const topItems = result.top_news.slice(0, 10);
+          let html = '<div class="score-batch-results"><div class="entity-related-title">📊 评分排行 TOP10：</div><div class="entity-related-list">';
+          topItems.forEach((item, i) => {
+            const score = item._total_score || 0;
+            const color = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444';
+            html += `<div class="entity-related-item" style="border-left:3px solid ${color};margin-bottom:4px;">
+              <span style="width:24px;font-weight:600;color:#6b7280;">#${i+1}</span>
+              <span class="entity-related-name" style="flex:1;">${item.title.substring(0, 40)}</span>
+              <span style="font-weight:600;color:${color};">${score}分</span>
+            </div>`;
+          });
+          html += '</div></div>';
+          
+          scoreChartLoading.style.display = 'none';
+          const batchResults = document.createElement('div');
+          batchResults.id = 'scoreBatchResults';
+          batchResults.innerHTML = html;
+          const oldBatch = document.getElementById('scoreBatchResults');
+          if (oldBatch) oldBatch.remove();
+          document.getElementById('scoreDetails').after(batchResults);
+        } else {
+          scoreStatus.textContent = `❌ 批量评分失败`;
+        }
+      } catch (error) {
+        scoreStatus.textContent = `❌ 请求失败: ${error.message}`;
+      }
+    });
+
+    function renderScoreRadar(result) {
+      scoreChartLoading.style.display = 'none';
+      scoreRadarCanvas.style.display = 'block';
+      scoreDetails.style.display = 'block';
+      
+      const ctx = scoreRadarCanvas.getContext('2d');
+      if (scoreRadarChartInstance) {
+        scoreRadarChartInstance.destroy();
+      }
+      
+      // 设置尺寸
+      const parent = scoreRadarCanvas.parentElement;
+      parent.style.height = '300px';
+      parent.style.position = 'relative';
+      
+      const dimensions = Object.keys(result.scores);
+      const labels = dimensions.map(d => result.dimension_labels[d]);
+      const data = dimensions.map(d => result.scores[d]);
+      const weights = dimensions.map(d => result.dimension_weights[d]);
+      
+      scoreRadarChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '六维评分',
+            data: data,
+            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+            borderColor: '#3b82f6',
+            borderWidth: 2,
+            pointBackgroundColor: '#3b82f6',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                stepSize: 20,
+                backdropColor: 'transparent'
+              },
+              pointLabels: {
+                font: { size: 12 }
+              },
+              grid: {
+                color: 'rgba(0,0,0,0.08)'
+              }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const dim = context.dataIndex;
+                  const w = (weights[dim] * 100).toFixed(0);
+                  return `${context.label}: ${context.parsed.r}分 (权重${w}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      // 显示详情
+      scoreTotalValue.textContent = `${result.total_score}/100`;
+      
+      let detailsHtml = '';
+      dimensions.forEach((dim, i) => {
+        const score = result.scores[dim];
+        const label = result.dimension_labels[dim];
+        const weight = (result.dimension_weights[dim] * 100).toFixed(0);
+        const detail = result.details[dim] || '';
+        const color = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : score >= 40 ? '#f97316' : '#ef4444';
+        
+        detailsHtml += `
+          <div class="score-dimension-item">
+            <div class="score-dim-header">
+              <span class="score-dim-label">${label}</span>
+              <span class="score-dim-value" style="color:${color};">${score}分</span>
+              <span class="score-dim-weight">权重${weight}%</span>
+            </div>
+            <div class="score-dim-bar-track">
+              <div class="score-dim-bar" style="width:${score}%;background:${color};"></div>
+            </div>
+            <div class="score-dim-detail">${detail}</div>
+          </div>
+        `;
+      });
+      
+      scoreDimensionList.innerHTML = detailsHtml;
+    }
+
     // ==================== 新加入样式 ====================
     const newStyles = document.createElement('style');
     newStyles.textContent = `
@@ -4060,8 +4463,639 @@ function initMapView() {
       .visualization-card-full { grid-column: 1 / -1; }
       
       .event-detail-loading { text-align: center; padding: 40px; color: #6b7280; }
+
+      /* Phase 2/3/4 卡片样式 */
+      .interest-tab { padding: 6px 14px; border: 1px solid #e5e7eb; background: #f9fafb; border-radius: 6px; cursor: pointer; font-size: 13px; color: #475569; transition: all 0.2s; }
+      .interest-tab:hover { background: #eef2ff; }
+      .interest-tab.active { background: #0078d4; color: #fff; border-color: #0078d4; }
+      .interest-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+      .interest-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+      .interest-card-title { flex: 1; font-weight: 500; color: #1e293b; font-size: 14px; }
+      .interest-card-score { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #dbeafe; color: #2563eb; white-space: nowrap; }
+      .interest-card-meta { font-size: 12px; color: #6b7280; margin-top: 2px; }
+      .interest-card-keywords { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+      .interest-keyword-tag { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: #f0f9ff; color: #0369a1; }
+      .alert-card { background: #fff; border-radius: 10px; padding: 12px; margin-bottom: 8px; border-left: 4px solid #3b82f6; }
+      .alert-card.level-warning { border-left-color: #f59e0b; }
+      .alert-card.level-critical { border-left-color: #ef4444; }
+      .alert-card.level-info { border-left-color: #3b82f6; }
+      .alert-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+      .alert-card-title { flex: 1; font-weight: 500; color: #1e293b; font-size: 13px; }
+      .alert-card-desc { font-size: 12px; color: #6b7280; margin-top: 2px; }
+      .alert-card-meta { font-size: 11px; color: #9ca3af; margin-top: 4px; display: flex; gap: 8px; }
+      .channel-card { background: #f9fafb; border-radius: 8px; padding: 10px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+      .channel-card-name { flex: 1; font-weight: 500; color: #1e293b; font-size: 13px; }
+      .channel-card-type { font-size: 11px; color: #6b7280; }
+      .channel-card-status { font-size: 12px; }
+      .channel-toggle { font-size: 12px; padding: 2px 10px; border-radius: 12px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; }
+      .channel-toggle.enabled { background: #dbeafe; color: #2563eb; border-color: #93c5fd; }
+      .channel-toggle.disabled { background: #f3f4f6; color: #9ca3af; border-color: #e5e7eb; }
+      .notify-history-item { font-size: 12px; padding: 6px 8px; border-bottom: 1px solid #f3f4f6; color: #475569; }
+      .notify-history-item .n-level { padding: 1px 6px; border-radius: 4px; font-size: 11px; margin-right: 4px; }
+      .n-level-info { background: #dbeafe; color: #2563eb; }
+      .n-level-warning { background: #fef3c7; color: #d97706; }
+      .n-level-critical { background: #fef2f2; color: #ef4444; }
+      .notify-history-item .n-time { color: #9ca3af; font-size: 11px; margin-left: 4px; }
+      .brief-section { margin-bottom: 12px; }
+      .brief-section h4 { font-size: 14px; color: #374151; margin: 0 0 8px; }
+      .brief-top-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 12px; }
+      .brief-top-rank { width: 20px; font-weight: 600; color: #6b7280; }
+      .brief-top-title { flex: 1; color: #1e293b; }
+      .brief-top-score { color: #2563eb; }
+      .brief-dist-item { display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; color: #6b7280; }
+      .widget-toggle-btn { padding: 4px 12px; border-radius: 12px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; font-size: 12px; transition: all 0.2s; }
+      .widget-toggle-btn.active { background: #dbeafe; color: #2563eb; border-color: #93c5fd; }
+      .widget-toggle-btn.inactive { background: #f3f4f6; color: #9ca3af; border-color: #e5e7eb; }
+
+      /* ==================== 粘性导航栏样式 ==================== */
+      .page-nav {
+        position: sticky; top: 0; z-index: 999;
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid #e5e7eb;
+        padding: 0 16px;
+        transition: box-shadow 0.2s;
+      }
+      .page-nav.scrolled { box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+      .page-nav-inner {
+        max-width: 1200px; margin: 0 auto;
+        display: flex; align-items: center;
+        height: 44px;
+      }
+      .nav-links {
+        display: flex; gap: 2px; overflow-x: auto;
+        scrollbar-width: none; -ms-overflow-style: none;
+        flex: 1;
+      }
+      .nav-links::-webkit-scrollbar { display: none; }
+      .nav-link {
+        padding: 6px 12px; font-size: 13px; color: #6b7280;
+        text-decoration: none; border-radius: 6px;
+        white-space: nowrap; transition: all 0.2s;
+      }
+      .nav-link:hover { background: #f0f9ff; color: #0078d4; }
+      .nav-link.active { background: #0078d4; color: #fff; }
+      .nav-toggle {
+        display: none; background: none; border: none;
+        font-size: 20px; cursor: pointer; color: #374151;
+        padding: 4px 8px; margin-right: 8px;
+      }
+      @media (max-width: 768px) {
+        .nav-toggle { display: block; }
+        .nav-links {
+          display: none; position: absolute; top: 100%; left: 0; right: 0;
+          background: rgba(255,255,255,0.98);
+          backdrop-filter: blur(8px);
+          flex-direction: column; padding: 8px 16px;
+          border-bottom: 1px solid #e5e7eb;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+          max-height: 70vh; overflow-y: auto;
+        }
+        .nav-links.open { display: flex; }
+        .page-nav-inner { position: relative; }
+        .nav-link { padding: 8px 12px; font-size: 14px; }
+      }
     `;
     document.head.appendChild(newStyles);
+
+    // ==================== 粘性导航栏功能 ====================
+    // 滚动侦测 - 高亮当前可见区域对应的导航链接
+    (function initNav() {
+      const nav = document.getElementById('pageNav');
+      const navLinks = document.querySelectorAll('.nav-link');
+      const navToggle = document.getElementById('navToggle');
+      const navLinksContainer = document.getElementById('navLinks');
+
+      // 移动端菜单切换
+      if (navToggle) {
+        navToggle.addEventListener('click', function(e) {
+          e.stopPropagation();
+          navLinksContainer.classList.toggle('open');
+        });
+        // 点击导航链接后自动关闭菜单
+        navLinksContainer.addEventListener('click', function(e) {
+          if (e.target.classList.contains('nav-link')) {
+            navLinksContainer.classList.remove('open');
+          }
+        });
+        // 点击页面其他区域关闭菜单
+        document.addEventListener('click', function(e) {
+          if (!nav.contains(e.target)) {
+            navLinksContainer.classList.remove('open');
+          }
+        });
+      }
+
+      // 滚动时添加阴影
+      let lastScrollY = 0;
+      const onScrollShadow = () => {
+        const scrollY = window.scrollY;
+        if (scrollY > 10) {
+          nav.classList.add('scrolled');
+        } else {
+          nav.classList.remove('scrolled');
+        }
+        lastScrollY = scrollY;
+      };
+      window.addEventListener('scroll', onScrollShadow, { passive: true });
+
+      // 滚动侦测 - 使用 IntersectionObserver 实现
+      const sectionIds = Array.from(navLinks).map(link => link.getAttribute('href').slice(1));
+      const sectionElements = sectionIds.map(id => document.getElementById(id)).filter(Boolean);
+
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+          // 找到当前可见比例最大的 section
+          let maxRatio = 0;
+          let activeId = null;
+          for (const entry of entries) {
+            if (entry.intersectionRatio > maxRatio) {
+              maxRatio = entry.intersectionRatio;
+              activeId = entry.target.id;
+            }
+          }
+          if (activeId) {
+            navLinks.forEach(link => {
+              link.classList.toggle('active', link.getAttribute('href') === '#' + activeId);
+            });
+          }
+        }, {
+          rootMargin: '-60px 0px -40% 0px',
+          threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5]
+        });
+
+        sectionElements.forEach(el => observer.observe(el));
+      } else {
+        // 降级方案：基于滚动位置
+        const onScrollFallback = () => {
+          const scrollY = window.scrollY + 80;
+          let activeId = null;
+          for (const el of sectionElements) {
+            const rect = el.getBoundingClientRect();
+            const top = rect.top + window.scrollY;
+            if (scrollY >= top) {
+              activeId = el.id;
+            }
+          }
+          if (activeId) {
+            navLinks.forEach(link => {
+              link.classList.toggle('active', link.getAttribute('href') === '#' + activeId);
+            });
+          }
+        };
+        window.addEventListener('scroll', onScrollFallback, { passive: true });
+        onScrollFallback();
+      }
+
+      // 初始状态
+      onScrollShadow();
+    })();
+
+    // ==================== Phase 2: AI 兴趣过滤 ====================
+    document.getElementById('refreshFilterBtn').addEventListener('click', async function() {
+      const filterStatus = document.getElementById('filterStatus');
+      const filterResults = document.getElementById('filterResults');
+      const filterStats = document.getElementById('filterStats');
+
+      filterStatus.textContent = '正在过滤新闻...';
+      filterResults.innerHTML = '<div class="no-results">分析中...</div>';
+
+      try {
+        const response = await fetch('/api/filter/interests');
+        const data = await response.json();
+
+        if (data.success && data.interests) {
+          filterStatus.textContent = `✅ 过滤完成 | 共 ${data.total_news} 条，匹配 ${data.filtered_news} 条`;
+          filterStats.textContent = `兴趣分类: ${data.interests.filter(i => i.news_count > 0).length}/${data.interests.length} 类有匹配`;
+
+          let html = '<div style="margin-bottom:8px;display:flex;gap:4px;flex-wrap:wrap;">';
+          const interestTabs = [];
+          data.interests.forEach((interest, idx) => {
+            if (interest.news_count > 0) {
+              interestTabs.push({ name: interest.name, count: interest.news_count, idx });
+            }
+          });
+          interestTabs.forEach((tab, i) => {
+            html += `<button class="interest-tab ${i === 0 ? 'active' : ''}" data-interest-idx="${tab.idx}">${tab.name} (${tab.count})</button>`;
+          });
+          html += '</div>';
+
+          // 显示第一个有数据的兴趣
+          if (interestTabs.length > 0) {
+            const first = interestTabs[0];
+            html += renderInterestNews(data.interests[first.idx]);
+          } else {
+            html += '<div class="no-results">暂无匹配新闻</div>';
+          }
+
+          filterResults.innerHTML = html;
+
+          // 绑定tab切换
+          filterResults.querySelectorAll('.interest-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+              filterResults.querySelectorAll('.interest-tab').forEach(t => t.classList.remove('active'));
+              this.classList.add('active');
+              const idx = parseInt(this.dataset.interestIdx);
+              const detailHtml = renderInterestNews(data.interests[idx]);
+              // 替换详情区域
+              const existingDetail = filterResults.querySelector('.interest-detail-area');
+              if (existingDetail) existingDetail.remove();
+              const detailDiv = document.createElement('div');
+              detailDiv.className = 'interest-detail-area';
+              detailDiv.innerHTML = detailHtml;
+              // 插入到tab后面
+              const tabsDiv = filterResults.querySelector('div:first-child');
+              tabsDiv.after(detailDiv);
+            });
+          });
+
+        } else {
+          filterStatus.textContent = `❌ 过滤失败: ${data.error || '未知错误'}`;
+          filterResults.innerHTML = `<div class="no-results" style="color:#ef4444;">${data.error || '失败'}</div>`;
+        }
+      } catch (error) {
+        filterStatus.textContent = `❌ 请求失败: ${error.message}`;
+        filterResults.innerHTML = `<div class="no-results" style="color:#ef4444;">请求失败: ${error.message}</div>`;
+      }
+    });
+
+    function renderInterestNews(interest) {
+      if (!interest.news || interest.news.length === 0) return '<div class="no-results">该分类暂无匹配新闻</div>';
+      let html = `<div class="interest-detail-area"><div style="font-size:12px;color:#6b7280;margin-bottom:6px;">
+        <strong>${interest.name}</strong> | 关键词: ${interest.keywords.slice(0, 8).join(', ')} | 权重: ${interest.weight}
+      </div>`;
+      interest.news.forEach(item => {
+        html += `<div class="interest-card">
+          <div class="interest-card-header">
+            <span class="interest-card-title">${item.title}</span>
+            <span class="interest-card-score">${(item.score * 100).toFixed(0)}%</span>
+          </div>
+          <div class="interest-card-meta">来源: ${item.source || '未知'}</div>
+          <div class="interest-card-keywords">${item.keywords.map(k => `<span class="interest-keyword-tag">${k}</span>`).join('')}</div>
+        </div>`;
+      });
+      html += '</div>';
+      return html;
+    }
+
+    // ==================== Phase 2: 舆情异常监控 ====================
+    document.getElementById('opinionAnalyzeBtn').addEventListener('click', async function() {
+      await runOpinionAnalysis(false);
+    });
+    document.getElementById('opinionRefreshBtn').addEventListener('click', async function() {
+      await runOpinionAnalysis(true);
+    });
+
+    async function runOpinionAnalysis(force) {
+      const status = document.getElementById('opinionStatus');
+      const noResults = document.getElementById('opinionNoResults');
+      const alertList = document.getElementById('opinionAlertList');
+      const statsEl = document.getElementById('opinionStats');
+      const refreshBtn = document.getElementById('opinionRefreshBtn');
+
+      status.textContent = force ? '强制分析中...' : '正在分析舆情...';
+      noResults.style.display = 'none';
+      alertList.style.display = 'none';
+
+      try {
+        const url = force ? '/api/opinion/analyze?force=true' : '/api/opinion/analyze';
+        const response = await safeFetch(url, { method: 'POST' }, 30000);
+        const data = await response.json();
+
+        if (data.success) {
+          const alerts = data.alerts || [];
+          const stats = data.statistics || {};
+          refreshBtn.style.display = 'inline-block';
+
+          if (alerts.length > 0) {
+            status.textContent = `✅ 发现 ${alerts.length} 个异常信号`;
+            alertList.style.display = 'block';
+            alertList.innerHTML = alerts.map(a => `
+              <div class="alert-card level-${a.level}">
+                <div class="alert-card-header">
+                  <span>${a.level === 'critical' ? '🚨' : a.level === 'warning' ? '⚠️' : 'ℹ️'}</span>
+                  <span class="alert-card-title">${a.title}</span>
+                </div>
+                <div class="alert-card-desc">${a.description}</div>
+                <div class="alert-card-meta">
+                  <span>类型: ${a.type}</span>
+                  <span>级别: ${a.level}</span>
+                  <span>时间: ${a.timestamp}</span>
+                </div>
+              </div>
+            `).join('');
+          } else {
+            status.textContent = '✅ 未检测到异常信号';
+            alertList.style.display = 'block';
+            alertList.innerHTML = '<div class="no-results" style="text-align:center;padding:16px;">✅ 未检测到异常信号</div>';
+          }
+
+          statsEl.textContent = `总告警: ${stats.total || 0} | 24h内: ${stats.recent_24h || 0}`;
+        } else {
+          status.textContent = `❌ 分析失败: ${data.error || '未知错误'}`;
+        }
+      } catch (error) {
+        status.textContent = `❌ 请求失败: ${error.message}`;
+      }
+    }
+
+    // 舆情过滤
+    document.getElementById('opinionLevelFilter').addEventListener('change', filterOpinionAlerts);
+    document.getElementById('opinionTypeFilter').addEventListener('change', filterOpinionAlerts);
+
+    function filterOpinionAlerts() {
+      const level = document.getElementById('opinionLevelFilter').value;
+      const type = document.getElementById('opinionTypeFilter').value;
+      const cards = document.querySelectorAll('#opinionAlertList .alert-card');
+      cards.forEach(card => {
+        const cardLevel = card.classList.contains('level-critical') ? 'critical' : card.classList.contains('level-warning') ? 'warning' : 'info';
+        const cardType = card.querySelector('.alert-card-meta span:first-child').textContent.replace('类型: ', '');
+        const levelMatch = level === 'all' || cardLevel === level;
+        const typeMatch = type === 'all' || cardType === type;
+        card.style.display = levelMatch && typeMatch ? '' : 'none';
+      });
+    }
+
+    // ==================== Phase 2: 通知通道管理 ====================
+    document.getElementById('refreshNotifyBtn').addEventListener('click', refreshNotifyChannels);
+    document.getElementById('sendTestNotifyBtn').addEventListener('click', sendTestNotification);
+
+    async function refreshNotifyChannels() {
+      const channelList = document.getElementById('notifyChannelList');
+      const notifyHistory = document.getElementById('notifyHistory');
+
+      channelList.innerHTML = '<div class="no-results" style="padding:16px;">加载中...</div>';
+
+      try {
+        const response = await fetch('/api/notification/channels');
+        const data = await response.json();
+
+        if (data.success && data.channels) {
+          let html = '<div style="font-size:13px;color:#6b7280;margin-bottom:8px;">通知通道状态:</div>';
+          Object.entries(data.channels).forEach(([name, info]) => {
+            const enabled = info.enabled;
+            html += `<div class="channel-card">
+              <span class="channel-card-name">${name}</span>
+              <span class="channel-card-type">${info.type || ''}</span>
+              <span class="channel-card-status">${enabled ? '✅ 已启用' : '❌ 已禁用'}</span>
+              <button class="channel-toggle ${enabled ? 'enabled' : 'disabled'}" data-channel="${name}" data-enabled="${enabled}">
+                ${enabled ? '禁用' : '启用'}
+              </button>
+            </div>`;
+          });
+          channelList.innerHTML = html;
+
+          // 绑定启用/禁用按钮
+          channelList.querySelectorAll('.channel-toggle').forEach(btn => {
+            btn.addEventListener('click', async function() {
+              const name = this.dataset.channel;
+              const currentEnabled = this.dataset.enabled === 'true';
+              const newEnabled = !currentEnabled;
+              try {
+                // 通过发送通知不实际切换，只刷新状态
+                // 实际toggle通过dashboard API处理
+                refreshNotifyChannels();
+              } catch (e) {
+                console.error(e);
+              }
+            });
+          });
+        } else {
+          channelList.innerHTML = `<div class="no-results" style="padding:16px;color:#ef4444;">${data.error || '加载失败'}</div>`;
+        }
+      } catch (error) {
+        channelList.innerHTML = `<div class="no-results" style="padding:16px;color:#ef4444;">请求失败: ${error.message}</div>`;
+      }
+
+      // 同时加载历史
+      try {
+        const histRes = await fetch('/api/notification/history?limit=20');
+        const histData = await histRes.json();
+        if (histData.success && histData.history) {
+          notifyHistory.innerHTML = histData.history.map(m => `
+            <div class="notify-history-item">
+              <span class="n-level n-level-${m.level}">${m.level}</span>
+              <strong>${m.title}</strong>
+              <span class="n-time">${m.timestamp}</span>
+            </div>
+          `).join('');
+        }
+      } catch (e) {
+        notifyHistory.innerHTML = '<div style="padding:8px;color:#ef4444;font-size:12px;">加载历史失败</div>';
+      }
+    }
+
+    async function sendTestNotification() {
+      const status = document.getElementById('opinionStatus');
+      status.textContent = '发送测试通知...';
+
+      try {
+        const response = await fetch('/api/notification/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: '智能新闻工作台测试通知',
+            content: '这是一条来自智能新闻工作台的测试通知消息。',
+            level: 'info',
+            source: 'manual'
+          })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          const results = data.results || {};
+          const successCount = Object.values(results).filter(v => v).length;
+          status.textContent = `✅ 通知已发送 | ${successCount}/${Object.keys(results).length} 通道成功`;
+          refreshNotifyChannels();
+        } else {
+          status.textContent = `❌ 发送失败: ${data.error}`;
+        }
+      } catch (error) {
+        status.textContent = `❌ 请求失败: ${error.message}`;
+      }
+    }
+
+    // ==================== Phase 3/4: 每日简报 & Widget 管理 ====================
+    document.getElementById('genBriefBtn').addEventListener('click', generateDailyBrief);
+
+    async function generateDailyBrief() {
+      const briefStatus = document.getElementById('briefStatus');
+      const briefResults = document.getElementById('briefResults');
+
+      briefStatus.textContent = '正在生成简报...';
+      briefResults.innerHTML = '<div class="no-results">生成中...</div>';
+
+      try {
+        const response = await safeFetch('/api/brief/generate', { method: 'POST' }, 60000);
+        const data = await response.json();
+
+        if (data.success && data.brief) {
+          const brief = data.brief;
+          briefStatus.textContent = `✅ 简报已生成 | ${brief.date} | 共 ${brief.total_news} 条`;
+
+          let html = `
+            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;">
+              <h3 style="margin:0 0 4px;color:#1e40af;">📰 每日新闻简报</h3>
+              <div style="font-size:12px;color:#6b7280;margin-bottom:12px;">${brief.generated_at}</div>
+
+              <div class="brief-section">
+                <h4>🏆 热点 TOP 10</h4>
+                ${brief.top_news.map((n, i) => `
+                  <div class="brief-top-item">
+                    <span class="brief-top-rank">#${i+1}</span>
+                    <span class="brief-top-title">${n.title}</span>
+                    <span class="brief-top-score">${n.score}分</span>
+                  </div>
+                `).join('')}
+              </div>
+
+              <div class="brief-section">
+                <h4>📡 来源分布</h4>
+                ${Object.entries(brief.source_distribution).map(([k, v]) => `
+                  <div class="brief-dist-item"><span>${k}</span><span>${v}篇</span></div>
+                `).join('')}
+              </div>
+
+              <div class="brief-section">
+                <h4>🌍 地区分布</h4>
+                ${Object.entries(brief.region_distribution).map(([k, v]) => `
+                  <div class="brief-dist-item"><span>${k}</span><span>${v}篇</span></div>
+                `).join('')}
+              </div>
+
+              <div style="font-size:12px;color:#9ca3af;margin-top:8px;">
+                完整HTML已保存至: <code>${data.saved_path || ''}</code>
+              </div>
+            </div>
+          `;
+          briefResults.innerHTML = html;
+        } else {
+          briefStatus.textContent = `❌ 生成失败: ${data.error || '未知错误'}`;
+          briefResults.innerHTML = `<div class="no-results" style="color:#ef4444;">${data.error || '失败'}</div>`;
+        }
+      } catch (error) {
+        briefStatus.textContent = `❌ 请求失败: ${error.message}`;
+        briefResults.innerHTML = `<div class="no-results" style="color:#ef4444;">请求失败: ${error.message}</div>`;
+      }
+    }
+
+    // ==================== Widget 开关管理 ====================
+    async function loadWidgetToggles() {
+      const container = document.getElementById('widgetToggles');
+      try {
+        const response = await fetch('/api/dashboard/config');
+        const data = await response.json();
+
+        if (data.success && data.widgets) {
+          const widgetLabels = {
+            weather: '天气', trend: '趋势', ai_analysis: 'AI分析', scoring: '评分',
+            interest_filter: '兴趣过滤', opinion_monitor: '舆情监控',
+            entity_graph: '实体图谱', event_tracker: '事件追踪', entity_miner: '实体挖掘'
+          };
+          container.innerHTML = Object.entries(data.widgets)
+            .sort((a, b) => a[1].order - b[1].order)
+            .map(([name, info]) => {
+              const label = widgetLabels[name] || name;
+              return `<button class="widget-toggle-btn ${info.enabled ? 'active' : 'inactive'}" data-widget="${name}" data-enabled="${info.enabled}">${label}</button>`;
+            }).join('');
+
+          container.querySelectorAll('.widget-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', async function() {
+              const name = this.dataset.widget;
+              const currentEnabled = this.dataset.enabled === 'true';
+              const newEnabled = !currentEnabled;
+              try {
+                const res = await fetch('/api/dashboard/toggle', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name, enabled: newEnabled })
+                });
+                const result = await res.json();
+                if (result.success) {
+                  this.dataset.enabled = newEnabled.toString();
+                  this.className = `widget-toggle-btn ${newEnabled ? 'active' : 'inactive'}`;
+                }
+              } catch (e) {
+                console.error('切换Widget失败:', e);
+              }
+            });
+          });
+        }
+      } catch (error) {
+        container.innerHTML = `<span style="font-size:12px;color:#ef4444;">加载失败: ${error.message}</span>`;
+      }
+    }
+
+    // 加载Widget配置
+    loadWidgetToggles();
+
+    // ==================== Phase 3/4: 智能调度器管理 ====================
+    document.getElementById('schedulerStartBtn').addEventListener('click', async function() {
+      const statusEl = document.getElementById('schedulerStatus');
+      statusEl.textContent = '启动中...';
+      try {
+        const res = await fetch('/api/scheduler/start', { method: 'POST' });
+        const data = await res.json();
+        statusEl.textContent = data.success ? '✅ 运行中' : `❌ ${data.error}`;
+        refreshSchedulerStatus();
+      } catch(e) {
+        statusEl.textContent = `❌ ${e.message}`;
+      }
+    });
+
+    document.getElementById('schedulerStopBtn').addEventListener('click', async function() {
+      const statusEl = document.getElementById('schedulerStatus');
+      statusEl.textContent = '停止中...';
+      try {
+        const res = await fetch('/api/scheduler/stop', { method: 'POST' });
+        const data = await res.json();
+        statusEl.textContent = data.success ? '⏹ 已停止' : `❌ ${data.error}`;
+        refreshSchedulerStatus();
+      } catch(e) {
+        statusEl.textContent = `❌ ${e.message}`;
+      }
+    });
+
+    document.getElementById('schedulerRefreshBtn').addEventListener('click', refreshSchedulerStatus);
+
+    async function refreshSchedulerStatus() {
+      const statusEl = document.getElementById('schedulerStatus');
+      try {
+        const res = await fetch('/api/scheduler/status');
+        const data = await res.json();
+        if (data.success) {
+          const taskInfo = Object.keys(data.tasks || {}).length > 0
+            ? ` | 任务: ${Object.entries(data.tasks).map(([k,v]) => `${k}(${v.interval}min)`).join(', ')}`
+            : ' | 无定时任务';
+          statusEl.textContent = data.running ? `✅ 运行中${taskInfo}` : '⏹ 未启动';
+        }
+      } catch(e) {
+        statusEl.textContent = `❌ ${e.message}`;
+      }
+    }
+
+    // 首次加载调度器状态
+    refreshSchedulerStatus();
+
+    // ==================== 初始化：自动刷新新闻时通知事件联动 ====================
+    // 拦截原有的loadNews以触发兴趣过滤刷新
+    // 使用 MutationObserver 监听新闻加载完成
+
+    // 如果新闻加载完成，自动刷新兴趣过滤
+    const origLoadNews = window.loadNews;
+    if (origLoadNews) {
+      window.loadNews = async function() {
+        await origLoadNews.apply(this, arguments);
+        // 延迟刷新兴趣过滤
+        setTimeout(() => {
+          if (document.getElementById('refreshFilterBtn')) {
+            document.getElementById('refreshFilterBtn').click();
+          }
+        }, 1000);
+      };
+    }
+
+    console.log('✅ Phase 2/3/4 JS handlers initialized');
   </script>
 </body>
 </html>

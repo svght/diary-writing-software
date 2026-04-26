@@ -157,10 +157,17 @@ class EventTracker:
                     summary = event.get("summary", "") or title[:100]
                     new_count = event.get("news_count", 0) + 1
                     
-                    # 确定状态
-                    if new_count <= 3:
+                    # 确定状态 - 降低阈值以更准确反映事件发展阶段
+                    # 统计数据库中实际关联的新闻数量
+                    try:
+                        news_ids = self.db.get_event_news_ids(matched_event_id)
+                        actual_count = len(news_ids)
+                    except Exception:
+                        actual_count = new_count
+                    
+                    if actual_count <= 2:
                         status = "emerging"
-                    elif new_count <= 10:
+                    elif actual_count <= 5:
                         status = "active"
                     else:
                         status = "declining"
@@ -334,12 +341,21 @@ class EventTracker:
         elif entity_name:
             entity_id = self.db.get_entity_id(entity_name)
             if entity_id:
-                news_ids = self.db.get_entity_news_ids(entity_name)
+                news_ids = set(self.db.get_entity_news_ids(entity_name))
                 all_events = self.db.get_events_list()
                 
-                for event in all_events:
-                    if entity_name in event.get("entities", []):
+                for event_summary in all_events:
+                    if entity_name in event_summary.get("entities", []):
+                        # get_event_by_id 能获取完整新闻列表（含 news 字段）
+                        event = self.db.get_event_by_id(event_summary["id"])
+                        if not event:
+                            continue
                         for news_item in event.get("news", []):
+                            # 使用 news_ids 过滤，只包含包含该实体的新闻
+                            news_item_id = news_item.get("id")
+                            if news_ids and news_item_id and news_item_id not in news_ids:
+                                continue
+                            
                             published = news_item.get("published_at", "") or news_item.get("published", "")
                             if published and len(published) >= 10:
                                 date_key = published[:10]
@@ -358,7 +374,11 @@ class EventTracker:
                             })
         else:
             all_events = self.db.get_events_list()
-            for event in all_events:
+            for event_summary in all_events:
+                # get_event_by_id 能获取完整新闻列表（含 news 字段）
+                event = self.db.get_event_by_id(event_summary["id"])
+                if not event:
+                    continue
                 for news_item in event.get("news", []):
                     published = news_item.get("published_at", "") or news_item.get("published", "")
                     if published and len(published) >= 10:

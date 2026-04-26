@@ -628,10 +628,22 @@ class Database:
     # ==================== 工具方法 ====================
     
     def _row_to_dict(self, row) -> Dict:
-        """将sqlite3.Row转换为字典"""
+        """将sqlite3.Row转换为字典，同时保证兼容前端使用的 `link` 字段名"""
         if isinstance(row, sqlite3.Row):
-            return dict(row)
-        return dict(row)
+            d = dict(row)
+        else:
+            d = dict(row)
+        # 数据库列名为 url，前端模板使用 item.link，补充 link 字段
+        if 'url' in d and 'link' not in d:
+            d['link'] = d['url']
+        # 同样兼容 description 等字段
+        if 'description' not in d and 'content' in d:
+            d['description'] = d['content'][:200] if d.get('content') else ''
+        if 'published_at' in d and 'published' not in d:
+            d['published'] = d['published_at']
+        if 'category' in d and '_category' not in d:
+            d['_category'] = d['category']
+        return d
     
     def close(self):
         """关闭数据库连接"""

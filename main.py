@@ -20,11 +20,20 @@ from news_summarizer import get_summarizer, generate_summary_for_news
 from sentiment_analyzer import get_sentiment_analyzer, analyze_sentiment_from_news
 from trend_analyzer import get_trend_analyzer, update_trend_with_news
 from region_analyzer import get_region_analyzer, update_region_with_news
+from database import get_database
 from deepseek_comment_generator import get_deepseek_generator
 from word_cloud_service import get_word_cloud_service
 from entity_graph import get_entity_graph, get_entity_extractor, process_news_for_graph
 from event_tracker import get_event_tracker
 from entity_miner import get_entity_miner
+from ai_deep_analyzer import get_ai_deep_analyzer
+from news_scorer import get_news_scorer
+from trend_analyzer import get_trend_analyzer, calculate_news_weight
+from notification_manager import get_notification_manager
+from ai_filter import get_ai_filter
+from public_opinion_monitor import get_opinion_monitor
+from scheduler import get_scheduler, get_report_generator, get_dashboard, ScheduledTask
+
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 weather_service = WeatherService()
@@ -382,6 +391,43 @@ def api_rewrite_styles():
         return jsonify({"success": True, "rewrite_styles": styles})
     except Exception as e:
         return jsonify(success=False, error=str(e)), 500
+
+
+@app.route('/api/news/search-content')
+def api_news_search_content():
+    """根据新闻标题搜索完整内容"""
+    try:
+        title = request.args.get('title', '').strip()
+        if not title:
+            return jsonify(success=False, error='请提供新闻标题'), 400
+        
+        db = get_database()
+        news_list = db.search_news_db(keyword=title, max_results=5)
+        
+        matched_news = None
+        for news in news_list:
+            if news.get('title', '').strip() == title:
+                matched_news = news
+                break
+        
+        if not matched_news and news_list:
+            # 模糊匹配：找最接近的
+            matched_news = news_list[0]
+        
+        if matched_news:
+            return jsonify({
+                "success": True,
+                "news": {
+                    "title": matched_news.get('title', ''),
+                    "content": matched_news.get('content', '') or matched_news.get('description', ''),
+                    "source": matched_news.get('source', ''),
+                    "published": matched_news.get('published_at', '')
+                }
+            })
+        else:
+            return jsonify(success=False, error='未找到匹配的新闻内容', news=None)
+    except Exception as e:
+        return jsonify(success=False, error=f'搜索新闻内容失败: {str(e)}'), 500
 
 
 # ==================== 原有功能保留 ====================
@@ -902,17 +948,505 @@ def api_entity_miner_statistics():
         return jsonify(success=False, error=f'获取统计失败: {str(e)}'), 500
 
 
+# ==================== AI深度分析（新增） ====================
+
+@app.route('/api/trend/ai-analysis')
+def api_trend_ai_analysis():
+    """AI深度分析当前新闻"""
+    try:
+        force_refresh = request.args.get('force', 'false').lower() in ('true', '1', 'yes')
+
+        # 获取新闻数据
+        news_data = news_service.get_hot_news()
+
+        all_news = []
+        if 'domestic' in news_data:
+            all_news.extend(news_data['domestic'])
+        if 'international' in news_data:
+            all_news.extend(news_data['international'])
+
+        if not all_news:
+            return jsonify(success=False, error='没有新闻数据可供分析'), 400
+
+        analyzer = get_ai_deep_analyzer()
+        result = analyzer.analyze_news(all_news, force_refresh=force_refresh)
+
+        return jsonify({
+            "success": result.success,
+            "analysis": {
+                "core_trends": result.core_trends,
+                "sentiment_controversy": result.sentiment_controversy,
+                "signals": result.signals,
+                "entity_opinions": result.entity_opinions,
+                "outlook_strategy": result.outlook_strategy
+            },
+            "model": result.model,
+            "generation_time": result.generation_time,
+            "cached": result.cached,
+            "news_count": result.news_count,
+            "error": result.error
+        })
+
+    except Exception as e:
+        return jsonify(success=False, error=f'AI分析失败: {str(e)}'), 500
+
+
+# ==================== 新闻六维评分（新增） ====================
+
+@app.route('/api/news/score', methods=['POST'])
+def api_news_score():
+    """获取新闻六维评分"""
+    try:
+        data = request.json or {}
+        title = data.get('title', '')
+        content = data.get('content', '')
+        source = data.get('source', '')
+        hot_score = data.get('hot_score', 0)
+
+        news_item = {
+            "title": title,
+            "content": content,
+            "source": source,
+            "hot_score": hot_score
+        }
+
+        scorer = get_news_scorer()
+        result = scorer.get_dimension_scores(news_item)
+
+        return jsonify({
+            "success": True,
+            "scores": result["scores"],
+            "details": result["details"],
+            "total_score": result["total_score"],
+            "dimension_labels": result["dimension_labels"],
+            "dimension_weights": result["dimension_weights"]
+        })
+
+    except Exception as e:
+        return jsonify(success=False, error=f'评分失败: {str(e)}'), 500
+
+
+@app.route('/api/news/score/batch', methods=['POST'])
+def api_news_score_batch():
+    """批量获取新闻六维评分"""
+    try:
+        data = request.json or {}
+        news_items = data.get('news_items', [])
+
+        if not news_items:
+            # 从当前新闻数据获取
+            news_data = news_service.get_hot_news()
+            all_news = []
+            if 'domestic' in news_data:
+                all_news.extend(news_data['domestic'])
+            if 'international' in news_data:
+                all_news.extend(news_data['international'])
+            news_items = all_news
+
+        if not news_items:
+            return jsonify(success=False, error='没有新闻数据'), 400
+
+        scorer = get_news_scorer()
+        scored = scorer.score_news_batch(news_items)
+        top_news = scorer.get_top_news(news_items, top_n=20)
+
+        return jsonify({
+            "success": True,
+            "scored_news": scored,
+            "top_news": top_news,
+            "total": len(scored)
+        })
+
+    except Exception as e:
+        return jsonify(success=False, error=f'批量评分失败: {str(e)}'), 500
+
+
+# ==================== 加权热点新闻（新增） ====================
+
+@app.route('/api/trend/weighted')
+def api_trend_weighted():
+    """获取加权排序后的热点新闻"""
+    try:
+        top_n = request.args.get('top_n', '20')
+        top_n_int = int(top_n) if top_n.isdigit() else 20
+
+        # 获取新闻数据
+        news_data = news_service.get_hot_news()
+
+        all_news = []
+        if 'domestic' in news_data:
+            all_news.extend(news_data['domestic'])
+        if 'international' in news_data:
+            all_news.extend(news_data['international'])
+
+        if not all_news:
+            return jsonify(success=False, error='没有新闻数据'), 400
+
+        analyzer = get_trend_analyzer()
+        weighted = analyzer.get_weighted_hot_news(all_news, top_n=top_n_int)
+
+        return jsonify({
+            "success": True,
+            "weighted_news": weighted,
+            "total": len(weighted),
+            "top_n": top_n_int
+        })
+
+    except Exception as e:
+        return jsonify(success=False, error=f'获取加权新闻失败: {str(e)}'), 500
+
+
+# ==================== 舆情监控（Phase 2） ====================
+
+@app.route('/api/notification/send', methods=['POST'])
+def api_notification_send():
+    """发送通知"""
+    try:
+        data = request.json or {}
+        title = data.get('title', '通知')
+        content = data.get('content', '')
+        level = data.get('level', 'info')
+        source = data.get('source', 'manual')
+        channels = data.get('channels', None)  # None表示所有通道
+
+        notifier = get_notification_manager()
+        results = notifier.send_alert(
+            title=title,
+            content=content,
+            level=level,
+            source=source,
+            channels=channels
+        )
+
+        return jsonify({
+            "success": True,
+            "results": results,
+            "channel_status": notifier.get_channel_status()
+        })
+
+    except Exception as e:
+        return jsonify(success=False, error=f'发送通知失败: {str(e)}'), 500
+
+
+@app.route('/api/notification/history')
+def api_notification_history():
+    """获取通知历史"""
+    try:
+        limit = request.args.get('limit', '50')
+        level = request.args.get('level', None)
+        source = request.args.get('source', None)
+
+        limit_int = int(limit) if limit.isdigit() else 50
+
+        notifier = get_notification_manager()
+        history = notifier.get_history(
+            limit=limit_int,
+            level=level if level and level != 'all' else None,
+            source=source if source and source != 'all' else None
+        )
+
+        return jsonify({
+            "success": True,
+            "history": [
+                {
+                    "title": m.title,
+                    "content": m.content[:200],
+                    "level": m.level,
+                    "timestamp": m.timestamp,
+                    "source": m.source
+                }
+                for m in history
+            ],
+            "total": len(history),
+            "channel_status": notifier.get_channel_status()
+        })
+
+    except Exception as e:
+        return jsonify(success=False, error=f'获取通知历史失败: {str(e)}'), 500
+
+
+@app.route('/api/notification/channels')
+def api_notification_channels():
+    """获取通道状态"""
+    try:
+        notifier = get_notification_manager()
+        return jsonify({
+            "success": True,
+            "channels": notifier.get_channel_status()
+        })
+    except Exception as e:
+        return jsonify(success=False, error=f'获取通道状态失败: {str(e)}'), 500
+
+
+@app.route('/api/filter/interests')
+def api_filter_interests():
+    """获取兴趣过滤配置和过滤结果"""
+    try:
+        # 获取新闻数据
+        news_data = news_service.get_hot_news()
+
+        all_news = []
+        if 'domestic' in news_data:
+            all_news.extend(news_data['domestic'])
+        if 'international' in news_data:
+            all_news.extend(news_data['international'])
+
+        ai_filter = get_ai_filter()
+
+        # 获取按兴趣分组的过滤结果
+        grouped = ai_filter.get_filtered_by_interest(all_news)
+        config = ai_filter.get_config()
+
+        # 格式化为前端可用数据
+        interests_data = []
+        for interest in config["interests"]:
+            name = interest["name"]
+            news_list = grouped.get(name, [])
+            interests_data.append({
+                "name": name,
+                "keywords": interest["keywords"],
+                "weight": interest["weight"],
+                "enabled": interest.get("enabled", True),
+                "categories": interest.get("categories", []),
+                "news_count": len(news_list),
+                "news": [
+                    {
+                        "title": n["news"]["title"],
+                        "score": n["match_score"],
+                        "keywords": n["matched_keywords"],
+                        "source": n["news"].get("source", "")
+                    }
+                    for n in news_list[:10]
+                ]
+            })
+
+        return jsonify({
+            "success": True,
+            "interests": interests_data,
+            "settings": config["settings"],
+            "total_news": len(all_news),
+            "filtered_news": sum(len(v) for v in grouped.values())
+        })
+
+    except Exception as e:
+        return jsonify(success=False, error=f'获取兴趣过滤失败: {str(e)}'), 500
+
+
+@app.route('/api/opinion/analyze', methods=['POST'])
+def api_opinion_analyze():
+    """执行舆情异常分析"""
+    try:
+        force = request.args.get('force', 'false').lower() in ('true', '1', 'yes')
+
+        # 获取新闻数据
+        news_data = news_service.get_hot_news()
+
+        all_news = []
+        if 'domestic' in news_data:
+            all_news.extend(news_data['domestic'])
+        if 'international' in news_data:
+            all_news.extend(news_data['international'])
+
+        if not all_news:
+            return jsonify(success=False, error='没有新闻数据'), 400
+
+        # 获取情感数据
+        sentiment_data = None
+        try:
+            analyzer = get_sentiment_analyzer()
+            sentiment = analyzer.analyze_sentiment_from_news(all_news, get_all_sentiment=True)
+            if isinstance(sentiment, dict):
+                sentiment_data = {
+                    "positive_ratio": sentiment.get("positive_ratio", 0),
+                    "negative_ratio": sentiment.get("negative_ratio", 0),
+                    "neutral_ratio": sentiment.get("neutral_ratio", 0),
+                }
+        except Exception:
+            pass
+
+        monitor = get_opinion_monitor()
+        alerts = monitor.analyze(all_news, sentiment_data=sentiment_data, force=force)
+
+        return jsonify({
+            "success": True,
+            "alerts": [
+                {
+                    "type": a.type,
+                    "level": a.level,
+                    "title": a.title,
+                    "description": a.description,
+                    "timestamp": a.timestamp,
+                    "metrics": a.metrics
+                }
+                for a in alerts
+            ],
+            "alert_count": len(alerts),
+            "statistics": monitor.get_alert_statistics()
+        })
+
+    except Exception as e:
+        return jsonify(success=False, error=f'舆情分析失败: {str(e)}'), 500
+
+
+@app.route('/api/opinion/alerts')
+def api_opinion_alerts():
+    """获取舆情告警记录"""
+    try:
+        limit = request.args.get('limit', '50')
+        level = request.args.get('level', None)
+        alert_type = request.args.get('type', None)
+
+        limit_int = int(limit) if limit.isdigit() else 50
+
+        monitor = get_opinion_monitor()
+        alerts = monitor.get_alerts(
+            limit=limit_int,
+            level=level if level and level != 'all' else None,
+            alert_type=alert_type if alert_type and alert_type != 'all' else None
+        )
+
+        return jsonify({
+            "success": True,
+            "alerts": alerts,
+            "total": len(alerts),
+            "statistics": monitor.get_alert_statistics()
+        })
+
+    except Exception as e:
+        return jsonify(success=False, error=f'获取告警失败: {str(e)}'), 500
+
+
+@app.route('/api/opinion/statistics')
+def api_opinion_statistics():
+    """获取舆情监控统计"""
+    try:
+        monitor = get_opinion_monitor()
+        return jsonify({
+            "success": True,
+            "statistics": monitor.get_alert_statistics()
+        })
+    except Exception as e:
+        return jsonify(success=False, error=f'获取舆情统计失败: {str(e)}'), 500
+
+
+# ==================== Dashboard & Widget 配置（Phase 3/4） ====================
+
+@app.route('/api/dashboard/config')
+def api_dashboard_config():
+    """获取Widget配置"""
+    try:
+        dashboard = get_dashboard()
+        return jsonify({
+            "success": True,
+            "widgets": dashboard.get_widgets()
+        })
+    except Exception as e:
+        return jsonify(success=False, error=f'获取配置失败: {str(e)}'), 500
+
+
+@app.route('/api/dashboard/toggle', methods=['POST'])
+def api_dashboard_toggle():
+    """切换Widget启用状态"""
+    try:
+        data = request.json or {}
+        name = data.get('name', '')
+        enabled = data.get('enabled', True)
+
+        if not name:
+            return jsonify(success=False, error='请提供Widget名称'), 400
+
+        dashboard = get_dashboard()
+        result = dashboard.toggle_widget(name, enabled)
+
+        return jsonify({
+            "success": result,
+            "widgets": dashboard.get_widgets()
+        })
+    except Exception as e:
+        return jsonify(success=False, error=f'切换失败: {str(e)}'), 500
+
+
+@app.route('/api/brief/generate', methods=['POST'])
+def api_brief_generate():
+    """生成每日简报"""
+    try:
+        # 获取新闻数据
+        news_data = news_service.get_hot_news()
+
+        all_news = []
+        if 'domestic' in news_data:
+            all_news.extend(news_data['domestic'])
+        if 'international' in news_data:
+            all_news.extend(news_data['international'])
+
+        if not all_news:
+            return jsonify(success=False, error='没有新闻数据'), 400
+
+        gen = get_report_generator()
+        brief = gen.generate_daily_brief(all_news)
+        html = gen.render_html(brief)
+        path = gen.save(brief, html)
+
+        return jsonify({
+            "success": True,
+            "brief": brief,
+            "html": html,
+            "saved_path": path
+        })
+    except Exception as e:
+        return jsonify(success=False, error=f'生成简报失败: {str(e)}'), 500
+
+
+@app.route('/api/scheduler/status')
+def api_scheduler_status():
+    """获取调度器状态"""
+    try:
+        scheduler = get_scheduler()
+        return jsonify({
+            "success": True,
+            "running": scheduler._running,
+            "tasks": {name: {"enabled": t.enabled, "interval": t.interval_minutes}
+                      for name, t in scheduler.tasks.items()}
+        })
+    except Exception as e:
+        return jsonify(success=False, error=f'获取状态失败: {str(e)}'), 500
+
+
+@app.route('/api/scheduler/start', methods=['POST'])
+def api_scheduler_start():
+    """启动调度器"""
+    try:
+        scheduler = get_scheduler()
+        scheduler.start()
+        return jsonify({"success": True, "message": "调度器已启动"})
+    except Exception as e:
+        return jsonify(success=False, error=f'启动失败: {str(e)}'), 500
+
+
+@app.route('/api/scheduler/stop', methods=['POST'])
+def api_scheduler_stop():
+    """停止调度器"""
+    try:
+        scheduler = get_scheduler()
+        scheduler.stop()
+        return jsonify({"success": True, "message": "调度器已停止"})
+    except Exception as e:
+        return jsonify(success=False, error=f'停止失败: {str(e)}'), 500
+
+
 def open_browser(url):
+
     try:
         webbrowser.open(url, new=2, autoraise=True)
     except Exception:
         pass
 
 
+
 def main():
     url = 'http://127.0.0.1:5000'
     open_browser(url)
-    app.run(host='127.0.0.1', port=5000, debug=False)
+    app.run(host='127.0.0.1', port=5000, debug=False, threaded=True)
 
 
 if __name__ == '__main__':

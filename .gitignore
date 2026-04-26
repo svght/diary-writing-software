@@ -75,3 +75,22 @@ word_cloud_cache/
 data/
 test_miner.py
 
+# External projects
+BestBlogs/
+TrendRadar/
+glance/
+
+# Server logs
+server_log.txt
+*.log
+
+# Temp files
+_stats.py
+_stats2.py
+stats_netease.txt
+stats_output.txt
+fetch_repos.py
+fetch_repos_fixed.py
+d
+saved_rewrites/
+notification_logs/
